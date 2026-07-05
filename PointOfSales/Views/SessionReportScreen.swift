@@ -69,7 +69,7 @@ struct SessionReportScreen: View {
     }
 
     private var mailSubject: String {
-        "Session report #\(session.sequenceNumber) — \(session.displayName)"
+        "Session report — \(session.displayName)"
     }
 
     private var mailBody: String {
@@ -77,7 +77,7 @@ struct SessionReportScreen: View {
         return """
         Hi,
 
-        Attached is session report #\(report.reportNumber) — \(report.sessionName) \
+        Attached is session report \(report.sessionName) \
         (\(report.startedAt.formatted(date: .long, time: .omitted))).
 
         Orders: \(report.orderCount)
