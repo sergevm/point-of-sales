@@ -73,6 +73,7 @@ struct CartPanelView: View {
                 cart.decrement(line)
             } label: {
                 Image(systemName: "minus.circle.fill")
+                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
             }
             .buttonStyle(.plain)
 
@@ -84,6 +85,7 @@ struct CartPanelView: View {
                 cart.increment(line)
             } label: {
                 Image(systemName: "plus.circle.fill")
+                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
             }
             .buttonStyle(.plain)
 
@@ -115,10 +117,16 @@ struct CartPanelView: View {
                     cart.clear()
                 } label: {
                     Text("Clear")
+                        .font(.headline)
+                        .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
+                        .background(
+                            .red.opacity(0.12),
+                            in: RoundedRectangle(cornerRadius: 14)
+                        )
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.depth(.red.opacity(0.25)))
                 .disabled(cart.isEmpty)
 
                 Button {
@@ -127,9 +135,9 @@ struct CartPanelView: View {
                     Text("Charge")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.prominentDepth(tint: .accentColor))
                 .disabled(cart.isEmpty)
                 .confirmationDialog(
                     "How is this paid?",

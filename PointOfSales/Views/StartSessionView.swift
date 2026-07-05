@@ -34,7 +34,7 @@ struct StartSessionView: View {
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.prominentDepth(tint: .accentColor))
 
             if !hasProducts {
                 Text("Tip: add categories and products from Configure first.")
