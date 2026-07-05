@@ -12,6 +12,7 @@ struct ProductEditView: View {
 
     @State private var name: String
     @State private var price: Decimal
+    @State private var costPrice: Decimal
     @State private var isActive: Bool
 
     init(product: Product?, category: ProductCategory, nextSortOrder: Int) {
@@ -20,6 +21,7 @@ struct ProductEditView: View {
         self.nextSortOrder = nextSortOrder
         _name = State(initialValue: product?.name ?? "")
         _price = State(initialValue: product?.price ?? 0)
+        _costPrice = State(initialValue: product?.costPrice ?? 0)
         _isActive = State(initialValue: product?.isActive ?? true)
     }
 
@@ -48,6 +50,18 @@ struct ProductEditView: View {
                     .keyboardType(.decimalPad)
                 }
                 Section {
+                    TextField(
+                        "Cost price",
+                        value: $costPrice,
+                        format: .currency(code: Money.currencyCode)
+                    )
+                    .keyboardType(.decimalPad)
+                } header: {
+                    Text("Cost price")
+                } footer: {
+                    Text("What you pay per unit to stock this product. Used for net-revenue reporting; never shown on the register.")
+                }
+                Section {
                     Toggle("Available on register", isOn: $isActive)
                 } footer: {
                     Text("Turn off to hide this product without deleting it or its past sales.")
@@ -71,6 +85,7 @@ struct ProductEditView: View {
         if let product {
             product.name = trimmedName
             product.price = price
+            product.costPrice = costPrice
             product.isActive = isActive
         } else {
             let new = Product(
@@ -80,6 +95,7 @@ struct ProductEditView: View {
                 isActive: isActive,
                 category: category
             )
+            new.costPrice = costPrice
             context.insert(new)
         }
         dismiss()

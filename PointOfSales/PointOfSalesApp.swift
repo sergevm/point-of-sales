@@ -13,7 +13,8 @@ struct PointOfSalesApp: App {
                 Product.self,
                 SaleSession.self,
                 Order.self,
-                OrderItem.self
+                OrderItem.self,
+                OrganizationSettings.self
             ]
         )
     }

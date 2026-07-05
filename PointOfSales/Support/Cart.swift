@@ -57,19 +57,32 @@ final class Cart {
         lines.removeAll()
     }
 
+    /// The amount actually charged for a given payment method: cash totals are
+    /// rounded to 5 cents as Belgian law requires, electronic ones are exact.
+    func chargeTotal(for method: PaymentMethod) -> Decimal {
+        method == .cash ? CashRounding.rounded(total) : total
+    }
+
     /// Persists the ticket as an `Order` (with snapshotted line items) attached to
     /// the active session, then empties the cart. No-op when the cart is empty.
     @discardableResult
-    func charge(into context: ModelContext, session: SaleSession) -> Order? {
+    func charge(into context: ModelContext, session: SaleSession, method: PaymentMethod) -> Order? {
         guard !isEmpty else { return nil }
 
-        let order = Order(total: total, session: session)
+        let charged = chargeTotal(for: method)
+        let order = Order(
+            total: charged,
+            paymentMethod: method,
+            roundingAdjustment: charged - total,
+            session: session
+        )
         context.insert(order)
 
         for line in lines {
             let item = OrderItem(
                 productName: line.product.name,
                 unitPrice: line.product.price,
+                unitCost: line.product.costPrice,
                 quantity: line.quantity,
                 product: line.product,
                 order: order

@@ -14,22 +14,32 @@ struct ConfigurationView: View {
     var body: some View {
         NavigationStack {
             List {
-                if categories.isEmpty {
-                    ContentUnavailableView(
-                        "No categories",
-                        systemImage: "square.grid.2x2",
-                        description: Text("Add a category to start building your menu.")
-                    )
+                Section("Categories") {
+                    if categories.isEmpty {
+                        ContentUnavailableView(
+                            "No categories",
+                            systemImage: "square.grid.2x2",
+                            description: Text("Add a category to start building your menu.")
+                        )
+                    }
+                    ForEach(categories) { category in
+                        NavigationLink {
+                            CategoryProductsView(category: category)
+                        } label: {
+                            categoryRow(category)
+                        }
+                    }
+                    .onDelete(perform: deleteCategories)
+                    .onMove(perform: moveCategories)
                 }
-                ForEach(categories) { category in
+
+                Section {
                     NavigationLink {
-                        CategoryProductsView(category: category)
+                        OrganizationSettingsView()
                     } label: {
-                        categoryRow(category)
+                        Label("Organization & bookkeeper", systemImage: "building.2")
                     }
                 }
-                .onDelete(perform: deleteCategories)
-                .onMove(perform: moveCategories)
             }
             .navigationTitle("Configuration")
             .navigationBarTitleDisplayMode(.inline)

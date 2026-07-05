@@ -9,6 +9,7 @@ struct CartPanelView: View {
 
     @Environment(\.modelContext) private var context
     @State private var showChargedConfirmation = false
+    @State private var choosingPayment = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -120,7 +121,9 @@ struct CartPanelView: View {
                 .buttonStyle(.bordered)
                 .disabled(cart.isEmpty)
 
-                Button(action: charge) {
+                Button {
+                    choosingPayment = true
+                } label: {
                     Text("Charge")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
@@ -128,9 +131,27 @@ struct CartPanelView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(cart.isEmpty)
+                .confirmationDialog(
+                    "How is this paid?",
+                    isPresented: $choosingPayment,
+                    titleVisibility: .visible
+                ) {
+                    ForEach(PaymentMethod.allCases) { method in
+                        Button(paymentButtonTitle(for: method)) {
+                            charge(method)
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                }
             }
         }
         .padding()
+    }
+
+    /// Cash shows the legally rounded amount so the seller announces the right
+    /// total, e.g. "Cash — €12.95" for an exact total of €12.93.
+    private func paymentButtonTitle(for method: PaymentMethod) -> String {
+        "\(method.displayName) — \(cart.chargeTotal(for: method).currencyString)"
     }
 
     private var chargedBanner: some View {
@@ -143,8 +164,8 @@ struct CartPanelView: View {
             .transition(.move(edge: .top).combined(with: .opacity))
     }
 
-    private func charge() {
-        guard cart.charge(into: context, session: session) != nil else { return }
+    private func charge(_ method: PaymentMethod) {
+        guard cart.charge(into: context, session: session, method: method) != nil else { return }
         withAnimation { showChargedConfirmation = true }
         Task {
             try? await Task.sleep(for: .seconds(1.5))

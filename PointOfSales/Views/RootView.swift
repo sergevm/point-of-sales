@@ -13,6 +13,8 @@ struct RootView: View {
     @State private var cart = Cart()
     @State private var showingConfiguration = false
     @State private var showingSales = false
+    @State private var showingHistory = false
+    @State private var reportSession: SaleSession?
 
     private var activeSession: SaleSession? { openSessions.first }
 
@@ -33,8 +35,25 @@ struct RootView: View {
         }
         .sheet(isPresented: $showingSales) {
             if let session = activeSession {
-                SessionSalesView(session: session)
+                SessionSalesView(session: session, onEnded: presentReport)
             }
+        }
+        .sheet(isPresented: $showingHistory) {
+            SessionHistoryView()
+        }
+        .sheet(item: $reportSession) { session in
+            NavigationStack {
+                SessionReportScreen(session: session)
+            }
+        }
+    }
+
+    /// After a session is closed its sales sheet dismisses itself; wait for
+    /// that transition before presenting the report sheet.
+    private func presentReport(for session: SaleSession) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.5))
+            reportSession = session
         }
     }
 
@@ -61,6 +80,11 @@ struct RootView: View {
                 } label: {
                     Label("Sales", systemImage: "list.bullet.rectangle")
                 }
+            }
+            Button {
+                showingHistory = true
+            } label: {
+                Label("History", systemImage: "clock.arrow.circlepath")
             }
             Button {
                 showingConfiguration = true

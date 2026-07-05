@@ -37,33 +37,32 @@ struct RegisterView: View {
     }
 
     private var categoryBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                if categories.isEmpty {
-                    Text("No categories yet — add some in Configure.")
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, 12)
-                }
-                ForEach(categories) { category in
-                    let isSelected = category.persistentModelID == selectedCategory?.persistentModelID
-                    Button {
-                        selectedCategoryID = category.persistentModelID
-                    } label: {
-                        Text(category.name)
-                            .font(.headline)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 12)
-                            .background(
-                                (Color(hex: category.colorHex) ?? .accentColor)
-                                    .opacity(isSelected ? 1 : 0.18)
-                            )
-                            .foregroundStyle(isSelected ? .white : .primary)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                }
+        FlowLayout(spacing: 12) {
+            if categories.isEmpty {
+                Text("No categories yet — add some in Configure.")
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 12)
             }
-            .padding(12)
+            ForEach(categories) { category in
+                let isSelected = category.persistentModelID == selectedCategory?.persistentModelID
+                Button {
+                    selectedCategoryID = category.persistentModelID
+                } label: {
+                    Text(category.name)
+                        .font(.headline)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .background(
+                            (Color(hex: category.colorHex) ?? .accentColor)
+                                .opacity(isSelected ? 1 : 0.18)
+                        )
+                        .foregroundStyle(isSelected ? .white : .primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
     }
 }

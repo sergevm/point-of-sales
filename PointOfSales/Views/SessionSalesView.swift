@@ -1,14 +1,21 @@
 import SwiftUI
 import SwiftData
 
-/// Lists the orders recorded in the current session, with the session total and
-/// a control to close the session.
+/// Lists the orders recorded in the current session, with the session total,
+/// a void action per order (audit trail instead of deletion), and a control to
+/// close the session and hand off to the report.
 struct SessionSalesView: View {
     let session: SaleSession
+
+    /// Called after the session has been closed, so the presenter can show the
+    /// report / email flow.
+    var onEnded: ((SaleSession) -> Void)?
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingEnd = false
+    @State private var voidingOrder: Order?
+    @State private var voidReason = ""
 
     private var orders: [Order] { session.ordersByNewest }
 
@@ -46,12 +53,25 @@ struct SessionSalesView: View {
                 }
             }
             .confirmationDialog(
-                "End this session? You won't be able to add more sales to it.",
+                "End this session? You won't be able to add more sales to it, and its report is final.",
                 isPresented: $confirmingEnd,
                 titleVisibility: .visible
             ) {
                 Button("End session", role: .destructive, action: endSession)
                 Button("Cancel", role: .cancel) {}
+            }
+            .alert(
+                "Void this order?",
+                isPresented: Binding(
+                    get: { voidingOrder != nil },
+                    set: { if !$0 { voidingOrder = nil } }
+                )
+            ) {
+                TextField("Reason (e.g. wrong entry)", text: $voidReason)
+                Button("Void order", role: .destructive, action: voidOrder)
+                Button("Cancel", role: .cancel) { voidingOrder = nil }
+            } message: {
+                Text("The order stays on record but no longer counts towards receipts.")
             }
         }
     }
@@ -59,6 +79,10 @@ struct SessionSalesView: View {
     private var summaryHeader: some View {
         HStack {
             Text("\(session.orderCount) order\(session.orderCount == 1 ? "" : "s")")
+            if session.voidedCount > 0 {
+                Text("· \(session.voidedCount) voided")
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             Text("Total \(session.total.currencyString)")
                 .font(.headline)
@@ -74,9 +98,13 @@ struct SessionSalesView: View {
             HStack {
                 Text(order.createdAt.formatted(date: .omitted, time: .standard))
                     .font(.subheadline.weight(.semibold))
+                Image(systemName: order.paymentMethod.systemImage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Text(order.total.currencyString)
                     .font(.subheadline.bold().monospacedDigit())
+                    .strikethrough(order.isVoided)
             }
             ForEach(order.items.sorted { $0.productName < $1.productName }) { item in
                 HStack {
@@ -89,12 +117,40 @@ struct SessionSalesView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            if order.isVoided {
+                Label(
+                    "Voided — \(order.voidReason?.isEmpty == false ? order.voidReason! : "no reason given")",
+                    systemImage: "xmark.circle"
+                )
+                .font(.caption)
+                .foregroundStyle(.red)
+            }
         }
         .padding(.vertical, 2)
+        .opacity(order.isVoided ? 0.6 : 1)
+        .swipeActions {
+            if !order.isVoided && session.isActive {
+                Button(role: .destructive) {
+                    voidReason = ""
+                    voidingOrder = order
+                } label: {
+                    Label("Void", systemImage: "xmark.circle")
+                }
+            }
+        }
+    }
+
+    private func voidOrder() {
+        guard let order = voidingOrder else { return }
+        order.voidedAt = .now
+        let trimmed = voidReason.trimmingCharacters(in: .whitespacesAndNewlines)
+        order.voidReason = trimmed.isEmpty ? nil : trimmed
+        voidingOrder = nil
     }
 
     private func endSession() {
         session.endedAt = .now
         dismiss()
+        onEnded?(session)
     }
 }

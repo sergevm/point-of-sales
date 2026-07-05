@@ -49,7 +49,10 @@ struct StartSessionView: View {
 
     private func startSession() {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let session = SaleSession(name: trimmed.isEmpty ? nil : trimmed)
+        let session = SaleSession(
+            name: trimmed.isEmpty ? nil : trimmed,
+            sequenceNumber: SaleSession.nextSequenceNumber(in: context)
+        )
         context.insert(session)
         name = ""
     }

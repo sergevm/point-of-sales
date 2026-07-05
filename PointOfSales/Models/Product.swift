@@ -9,6 +9,10 @@ final class Product {
     /// Unit price. Stored as `Decimal` to avoid floating-point money errors.
     var price: Decimal
 
+    /// What the vzw pays per unit to stock this product. Used for net-revenue
+    /// reporting; never shown on the register.
+    var costPrice: Decimal = 0
+
     /// Manual ordering within a category.
     var sortOrder: Int
 
