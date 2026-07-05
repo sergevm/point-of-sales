@@ -44,6 +44,7 @@ struct RegisterView: View {
                     .padding(.vertical, 12)
             }
             ForEach(categories) { category in
+                let color = Color(hex: category.colorHex) ?? .accentColor
                 let isSelected = category.persistentModelID == selectedCategory?.persistentModelID
                 Button {
                     selectedCategoryID = category.persistentModelID
@@ -52,14 +53,11 @@ struct RegisterView: View {
                         .font(.headline)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 12)
-                        .background(
-                            (Color(hex: category.colorHex) ?? .accentColor)
-                                .opacity(isSelected ? 1 : 0.18)
-                        )
+                        .background(color.opacity(isSelected ? 1 : 0.18))
                         .foregroundStyle(isSelected ? .white : .primary)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.depth(color.opacity(isSelected ? 0.45 : 0.15)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

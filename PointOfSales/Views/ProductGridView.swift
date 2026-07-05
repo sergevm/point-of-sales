@@ -46,9 +46,16 @@ struct ProductGridView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, minHeight: 90)
                             .padding(8)
-                            .background(tint, in: RoundedRectangle(cornerRadius: 14))
+                            .background(
+                                LinearGradient(
+                                    colors: [tint, tint.opacity(0.85)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                in: RoundedRectangle(cornerRadius: 14)
+                            )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.depth(tint.opacity(0.5)))
                     }
                 }
                 .padding(12)
