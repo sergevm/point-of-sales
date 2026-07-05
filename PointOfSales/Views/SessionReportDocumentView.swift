@@ -40,11 +40,11 @@ struct SessionReportDocumentView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Report #\(report.reportNumber)")
+                    Text(report.sessionName)
                         .font(.title3.bold())
-                    if let name = report.sessionName {
-                        Text(name).font(.footnote)
-                    }
+                    Text("Report #\(report.reportNumber)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             }
 

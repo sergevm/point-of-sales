@@ -32,7 +32,7 @@ struct SessionReport {
     }
 
     let reportNumber: Int
-    let sessionName: String?
+    let sessionName: String
     let startedAt: Date
     let endedAt: Date?
 
@@ -62,7 +62,7 @@ struct SessionReport {
 
     init(session: SaleSession, organization: OrganizationSettings?) {
         reportNumber = session.sequenceNumber
-        sessionName = session.name
+        sessionName = session.displayName
         startedAt = session.startedAt
         endedAt = session.endedAt
 
