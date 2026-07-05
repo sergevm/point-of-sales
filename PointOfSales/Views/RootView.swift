@@ -61,15 +61,24 @@ struct RootView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if let session = activeSession {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(session.name ?? "Session")
-                        .font(.headline)
-                    Text("Started \(session.startedAt.formatted(date: .omitted, time: .shortened))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Image(systemName: "cart.fill")
+                        .foregroundStyle(.tint)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(session.name ?? "Session")
+                            .font(.headline)
+                            .lineLimit(1)
+                        Text("Started \(session.startedAt.formatted(date: .omitted, time: .shortened))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
             } else {
-                Text("Point of Sale").font(.headline)
+                Text("Point of Sale")
+                    .font(.headline)
+                    .fixedSize(horizontal: true, vertical: false)
             }
         }
 

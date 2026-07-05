@@ -32,6 +32,13 @@ final class SaleSession {
 
     var isActive: Bool { endedAt == nil }
 
+    /// Human-facing name for display and reports. Uses the stored name when set;
+    /// otherwise falls back to the session's start date in the same `YY-MM-dd`
+    /// format the default naming uses (legacy sessions with no stored name).
+    var displayName: String {
+        name ?? SaleSession.dateFormatter.string(from: startedAt)
+    }
+
     /// Orders that count towards revenue.
     var validOrders: [Order] { orders.filter { !$0.isVoided } }
 
@@ -55,6 +62,33 @@ final class SaleSession {
     var ordersByNewest: [Order] {
         orders.sorted { $0.createdAt > $1.createdAt }
     }
+
+    /// A sensible default name when the user doesn't provide one: today's date
+    /// as `YY-MM-dd`, suffixed with `(session x)` for the 2nd and later sessions
+    /// of the same day.
+    static func defaultName(in context: ModelContext, on date: Date = .now) -> String {
+        let calendar = Calendar.current
+        let dayStart = calendar.startOfDay(for: date)
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
+            return dateFormatter.string(from: date)
+        }
+
+        let descriptor = FetchDescriptor<SaleSession>(
+            predicate: #Predicate { $0.startedAt >= dayStart && $0.startedAt < dayEnd }
+        )
+        let priorCount = (try? context.fetchCount(descriptor)) ?? 0
+
+        let base = dateFormatter.string(from: date)
+        // priorCount sessions already exist today, so this is session priorCount + 1.
+        return priorCount == 0 ? base : "\(base) (session \(priorCount + 1))"
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yy-MM-dd"
+        return formatter
+    }()
 
     /// The next free sequential report number.
     static func nextSequenceNumber(in context: ModelContext) -> Int {

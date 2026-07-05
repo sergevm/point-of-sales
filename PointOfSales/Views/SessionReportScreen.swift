@@ -30,7 +30,7 @@ struct SessionReportScreen: View {
                 .frame(maxWidth: .infinity)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Report #\(session.sequenceNumber)")
+        .navigationTitle(session.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -69,8 +69,7 @@ struct SessionReportScreen: View {
     }
 
     private var mailSubject: String {
-        let day = session.startedAt.formatted(date: .numeric, time: .omitted)
-        return "Session report #\(session.sequenceNumber) — \(day)"
+        "Session report #\(session.sequenceNumber) — \(session.displayName)"
     }
 
     private var mailBody: String {
@@ -78,7 +77,7 @@ struct SessionReportScreen: View {
         return """
         Hi,
 
-        Attached is session report #\(report.reportNumber) \
+        Attached is session report #\(report.reportNumber) — \(report.sessionName) \
         (\(report.startedAt.formatted(date: .long, time: .omitted))).
 
         Orders: \(report.orderCount)
