@@ -39,18 +39,39 @@ final class SaleSession {
         name ?? SaleSession.dateFormatter.string(from: startedAt)
     }
 
-    /// Orders that count towards revenue.
+    /// Orders that count towards revenue. Includes credit tickets, whose
+    /// negative totals net against sales.
     var validOrders: [Order] { orders.filter { !$0.isVoided } }
 
     var voidedOrders: [Order] { orders.filter(\.isVoided) }
 
-    /// Total revenue recorded so far in this session (voided orders excluded).
+    /// Non-voided sales (positive tickets).
+    var saleOrders: [Order] { validOrders.filter { !$0.isCorrection } }
+
+    /// Non-voided credit tickets (negative tickets).
+    var correctionOrders: [Order] { validOrders.filter(\.isCorrection) }
+
+    /// Total revenue recorded so far in this session (voided orders excluded,
+    /// credit tickets netted in).
     var total: Decimal {
         validOrders.reduce(Decimal.zero) { $0 + $1.total }
     }
 
-    /// Number of non-voided orders charged in this session.
-    var orderCount: Int { validOrders.count }
+    /// Gross sales before corrections are applied.
+    var salesTotal: Decimal {
+        saleOrders.reduce(Decimal.zero) { $0 + $1.total }
+    }
+
+    /// Combined (negative) total of the credit tickets in this session.
+    var correctionsTotal: Decimal {
+        correctionOrders.reduce(Decimal.zero) { $0 + $1.total }
+    }
+
+    /// Number of credit tickets in this session.
+    var correctionCount: Int { correctionOrders.count }
+
+    /// Number of non-voided sale orders charged in this session.
+    var orderCount: Int { saleOrders.count }
 
     var voidedCount: Int { voidedOrders.count }
 

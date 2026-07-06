@@ -11,35 +11,22 @@ struct SessionSalesView: View {
     /// report / email flow.
     var onEnded: ((SaleSession) -> Void)?
 
+    /// An order to scroll to and briefly highlight when the view appears, e.g.
+    /// when navigating in from a linked credit ticket.
+    var focusOrderID: PersistentIdentifier?
+
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingEnd = false
     @State private var voidingOrder: Order?
     @State private var voidReason = ""
+    @State private var highlightedOrderID: PersistentIdentifier?
 
     private var orders: [Order] { session.ordersByNewest }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if orders.isEmpty {
-                    ContentUnavailableView(
-                        "No sales yet",
-                        systemImage: "list.bullet.rectangle",
-                        description: Text("Charged orders will appear here.")
-                    )
-                } else {
-                    List {
-                        Section {
-                            ForEach(orders) { order in
-                                orderRow(order)
-                            }
-                        } header: {
-                            summaryHeader
-                        }
-                    }
-                }
-            }
+            content
             .navigationTitle(session.name ?? "Current session")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -76,9 +63,49 @@ struct SessionSalesView: View {
         }
     }
 
+    @ViewBuilder
+    private var content: some View {
+        if orders.isEmpty {
+            ContentUnavailableView(
+                "No sales yet",
+                systemImage: "list.bullet.rectangle",
+                description: Text("Charged orders will appear here.")
+            )
+        } else {
+            ScrollViewReader { proxy in
+                List {
+                    Section {
+                        ForEach(orders) { order in
+                            orderRow(order)
+                                .id(order.persistentModelID)
+                                .listRowBackground(rowBackground(order))
+                        }
+                    } header: {
+                        summaryHeader
+                    }
+                }
+                .onAppear { highlightedOrderID = focusOrderID }
+                .onChange(of: highlightedOrderID) { _, id in
+                    guard let id else { return }
+                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                }
+            }
+        }
+    }
+
+    private func rowBackground(_ order: Order) -> Color? {
+        highlightedOrderID == order.persistentModelID
+            ? Color.accentColor.opacity(0.15)
+            : nil
+    }
+
     private var summaryHeader: some View {
         HStack {
             Text("\(session.orderCount) order\(session.orderCount == 1 ? "" : "s")")
+            if session.correctionCount > 0 {
+                Text("· \(session.correctionCount) credit\(session.correctionCount == 1 ? "" : "s") \(session.correctionsTotal.currencyString)")
+                    .foregroundStyle(.red)
+            }
             if session.voidedCount > 0 {
                 Text("· \(session.voidedCount) voided")
                     .foregroundStyle(.secondary)
@@ -95,28 +122,9 @@ struct SessionSalesView: View {
 
     private func orderRow(_ order: Order) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(order.createdAt.formatted(date: .omitted, time: .standard))
-                    .font(.subheadline.weight(.semibold))
-                Image(systemName: order.paymentMethod.systemImage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(order.total.currencyString)
-                    .font(.subheadline.bold().monospacedDigit())
-                    .strikethrough(order.isVoided)
-            }
-            ForEach(order.items.sorted { $0.productName < $1.productName }) { item in
-                HStack {
-                    Text("\(item.quantity)×  \(item.productName)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text(item.lineTotal.currencyString)
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
+            orderRowHeader(order)
+            orderItems(order)
+            correctionLinks(order)
             if order.isVoided {
                 Label(
                     "Voided — \(order.voidReason?.isEmpty == false ? order.voidReason! : "no reason given")",
@@ -136,6 +144,81 @@ struct SessionSalesView: View {
                 } label: {
                     Label("Void", systemImage: "xmark.circle")
                 }
+            }
+        }
+    }
+
+    private func orderRowHeader(_ order: Order) -> some View {
+        HStack {
+            Text(order.createdAt.formatted(date: .omitted, time: .standard))
+                .font(.subheadline.weight(.semibold))
+            Image(systemName: order.paymentMethod.systemImage)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if order.isCorrection {
+                Text("Credit")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.red.opacity(0.12), in: Capsule())
+            }
+            Spacer()
+            Text(order.total.currencyString)
+                .font(.subheadline.bold().monospacedDigit())
+                .strikethrough(order.isVoided)
+                .foregroundStyle(order.isCorrection ? .red : .primary)
+        }
+    }
+
+    private func orderItems(_ order: Order) -> some View {
+        ForEach(order.items.sorted { $0.productName < $1.productName }) { item in
+            HStack {
+                Text("\(item.quantity)×  \(item.productName)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(item.lineTotal.currencyString)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    /// Tappable cross-links between a credit ticket and the order it corrects.
+    @ViewBuilder
+    private func correctionLinks(_ order: Order) -> some View {
+        if let reason = order.correctionReason, !reason.isEmpty {
+            Text(reason)
+                .font(.caption.italic())
+                .foregroundStyle(.secondary)
+        }
+        if order.isCorrection, let original = order.correctedOrder {
+            Button {
+                highlightedOrderID = original.persistentModelID
+            } label: {
+                Label(
+                    "Corrects the \(original.createdAt.formatted(date: .omitted, time: .shortened)) order",
+                    systemImage: "arrow.up.left"
+                )
+                .font(.caption)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.tint)
+        }
+        if order.hasCorrection {
+            ForEach(order.corrections.sorted { $0.createdAt < $1.createdAt }) { credit in
+                Button {
+                    highlightedOrderID = credit.persistentModelID
+                } label: {
+                    Label(
+                        "Corrected by the \(credit.createdAt.formatted(date: .omitted, time: .shortened)) credit",
+                        systemImage: "arrow.down.right"
+                    )
+                    .font(.caption)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tint)
             }
         }
     }

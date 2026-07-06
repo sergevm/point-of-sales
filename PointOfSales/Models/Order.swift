@@ -23,6 +23,23 @@ final class Order {
     var voidedAt: Date?
     var voidReason: String?
 
+    /// A correction (credit) ticket: its items carry negative quantities, so its
+    /// `total` is negative and nets against session revenue. Recorded when the
+    /// client is reimbursed for something that went wrong in an earlier order.
+    var isCorrection: Bool = false
+
+    /// Why the credit was issued (optional), for the bookkeeper's audit trail.
+    var correctionReason: String?
+
+    /// The original order this credit corrects, if the seller linked one at
+    /// charge time. Optional — a credit can be recorded without a link.
+    var correctedOrder: Order?
+
+    /// Credit orders linked back to this one. A non-empty list is what marks an
+    /// order as "corrected".
+    @Relationship(inverse: \Order.correctedOrder)
+    var corrections: [Order] = []
+
     var session: SaleSession?
 
     /// Line items on this ticket. Deleting the order deletes its items.
@@ -34,12 +51,18 @@ final class Order {
         total: Decimal = .zero,
         paymentMethod: PaymentMethod = .cash,
         roundingAdjustment: Decimal = .zero,
+        isCorrection: Bool = false,
+        correctionReason: String? = nil,
+        correctedOrder: Order? = nil,
         session: SaleSession? = nil
     ) {
         self.createdAt = createdAt
         self.total = total
         self.paymentMethodRaw = paymentMethod.rawValue
         self.roundingAdjustment = roundingAdjustment
+        self.isCorrection = isCorrection
+        self.correctionReason = correctionReason
+        self.correctedOrder = correctedOrder
         self.session = session
     }
 
@@ -49,6 +72,9 @@ final class Order {
     }
 
     var isVoided: Bool { voidedAt != nil }
+
+    /// True when at least one credit ticket has been linked back to this order.
+    var hasCorrection: Bool { !corrections.isEmpty }
 
     /// Total number of units across all line items.
     var itemCount: Int {

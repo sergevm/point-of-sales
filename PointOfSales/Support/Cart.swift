@@ -17,14 +17,27 @@ final class Cart {
 
     private(set) var lines: [Line] = []
 
+    /// When true, this is a credit ticket: everything on it is charged as a
+    /// negative amount to reimburse the client. Only togglable while the cart is
+    /// empty (enforced by the UI); reset when the cart is cleared.
+    var isCorrection = false
+
     var isEmpty: Bool { lines.isEmpty }
 
     /// Total number of units in the ticket (for a badge).
     var itemCount: Int { lines.reduce(0) { $0 + $1.quantity } }
 
+    /// The unsigned sum of the line totals. Always positive; use ``signedTotal``
+    /// for anything that must reflect a credit ticket's negative amount.
     var total: Decimal {
         lines.reduce(Decimal.zero) { $0 + $1.lineTotal }
     }
+
+    /// `-1` for a credit ticket, `+1` for a normal sale.
+    var sign: Int { isCorrection ? -1 : 1 }
+
+    /// The amount the ticket represents, signed: negative for a credit ticket.
+    var signedTotal: Decimal { Decimal(sign) * total }
 
     /// Adds one unit of a product, merging with an existing line if present.
     func add(_ product: Product) {
@@ -55,25 +68,40 @@ final class Cart {
 
     func clear() {
         lines.removeAll()
+        isCorrection = false
     }
 
     /// The amount actually charged for a given payment method: cash totals are
     /// rounded to 5 cents as Belgian law requires, electronic ones are exact.
+    /// Signed, so a credit ticket returns a negative amount.
     func chargeTotal(for method: PaymentMethod) -> Decimal {
-        method == .cash ? CashRounding.rounded(total) : total
+        method == .cash ? CashRounding.rounded(signedTotal) : signedTotal
     }
 
     /// Persists the ticket as an `Order` (with snapshotted line items) attached to
     /// the active session, then empties the cart. No-op when the cart is empty.
+    ///
+    /// For a credit ticket (``isCorrection``) the line items are stored with
+    /// negative quantities so every downstream total nets correctly, and an
+    /// optional `correctedOrder`/`reason` records the link and rationale.
     @discardableResult
-    func charge(into context: ModelContext, session: SaleSession, method: PaymentMethod) -> Order? {
+    func charge(
+        into context: ModelContext,
+        session: SaleSession,
+        method: PaymentMethod,
+        correctedOrder: Order? = nil,
+        reason: String? = nil
+    ) -> Order? {
         guard !isEmpty else { return nil }
 
         let charged = chargeTotal(for: method)
         let order = Order(
             total: charged,
             paymentMethod: method,
-            roundingAdjustment: charged - total,
+            roundingAdjustment: charged - signedTotal,
+            isCorrection: isCorrection,
+            correctionReason: isCorrection ? reason : nil,
+            correctedOrder: isCorrection ? correctedOrder : nil,
             session: session
         )
         context.insert(order)
@@ -83,7 +111,7 @@ final class Cart {
                 productName: line.product.name,
                 unitPrice: line.product.price,
                 unitCost: line.product.costPrice,
-                quantity: line.quantity,
+                quantity: sign * line.quantity,
                 product: line.product,
                 order: order
             )
