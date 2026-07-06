@@ -90,6 +90,10 @@ final class Cart {
             context.insert(item)
         }
 
+        // Flush to disk immediately: a charged order must not be lost to
+        // autosave timing if the app is killed right after the sale.
+        try? context.save()
+
         clear()
         return order
     }

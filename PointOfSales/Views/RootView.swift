@@ -16,6 +16,10 @@ struct RootView: View {
     @State private var showingHistory = false
     @State private var reportSession: SaleSession?
 
+    /// Session whose report should be shown once the sales sheet has finished
+    /// dismissing; presenting both at once would drop the second sheet.
+    @State private var pendingReportSession: SaleSession?
+
     private var activeSession: SaleSession? { openSessions.first }
 
     var body: some View {
@@ -33,9 +37,11 @@ struct RootView: View {
         .sheet(isPresented: $showingConfiguration) {
             ConfigurationView()
         }
-        .sheet(isPresented: $showingSales) {
+        .sheet(isPresented: $showingSales, onDismiss: presentPendingReport) {
             if let session = activeSession {
-                SessionSalesView(session: session, onEnded: presentReport)
+                SessionSalesView(session: session) { endedSession in
+                    pendingReportSession = endedSession
+                }
             }
         }
         .sheet(isPresented: $showingHistory) {
@@ -48,13 +54,11 @@ struct RootView: View {
         }
     }
 
-    /// After a session is closed its sales sheet dismisses itself; wait for
-    /// that transition before presenting the report sheet.
-    private func presentReport(for session: SaleSession) {
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.5))
-            reportSession = session
-        }
+    /// After a session is closed its sales sheet dismisses itself; the report
+    /// sheet is presented from that dismissal so the two never overlap.
+    private func presentPendingReport() {
+        reportSession = pendingReportSession
+        pendingReportSession = nil
     }
 
     @ToolbarContentBuilder

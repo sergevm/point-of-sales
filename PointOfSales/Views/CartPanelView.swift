@@ -7,8 +7,11 @@ struct CartPanelView: View {
     let session: SaleSession
     let cart: Cart
 
+    /// Called after an order is successfully charged, so the register can reveal
+    /// the just-completed order in its inspector.
+    var onCharged: () -> Void = {}
+
     @Environment(\.modelContext) private var context
-    @State private var showChargedConfirmation = false
     @State private var choosingPayment = false
 
     var body: some View {
@@ -36,11 +39,6 @@ struct CartPanelView: View {
             footer
         }
         .background(.background)
-        .overlay(alignment: .top) {
-            if showChargedConfirmation {
-                chargedBanner
-            }
-        }
     }
 
     private var header: some View {
@@ -162,22 +160,10 @@ struct CartPanelView: View {
         "\(method.displayName) — \(cart.chargeTotal(for: method).currencyString)"
     }
 
-    private var chargedBanner: some View {
-        Label("Order recorded", systemImage: "checkmark.circle.fill")
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(.green, in: Capsule())
-            .foregroundStyle(.white)
-            .padding(.top, 8)
-            .transition(.move(edge: .top).combined(with: .opacity))
-    }
-
+    /// Charges the cart and reveals the recorded order in the register's
+    /// last-order panel, which doubles as the confirmation.
     private func charge(_ method: PaymentMethod) {
         guard cart.charge(into: context, session: session, method: method) != nil else { return }
-        withAnimation { showChargedConfirmation = true }
-        Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            withAnimation { showChargedConfirmation = false }
-        }
+        onCharged()
     }
 }

@@ -9,6 +9,7 @@ struct RegisterView: View {
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
     @State private var selectedCategoryID: PersistentIdentifier?
+    @State private var showingLastOrder = false
 
     private var selectedCategory: ProductCategory? {
         if let id = selectedCategoryID,
@@ -18,6 +19,9 @@ struct RegisterView: View {
         return categories.first
     }
 
+    /// The most recently charged order in this session, shown in the inspector.
+    private var lastOrder: Order? { session.ordersByNewest.first }
+
     var body: some View {
         HStack(spacing: 0) {
             VStack(spacing: 0) {
@@ -25,14 +29,41 @@ struct RegisterView: View {
                 Divider()
                 ProductGridView(category: selectedCategory) { product in
                     cart.add(product)
+                    showingLastOrder = false
                 }
             }
             .frame(maxWidth: .infinity)
 
             Divider()
 
-            CartPanelView(session: session, cart: cart)
-                .frame(width: 340)
+            CartPanelView(session: session, cart: cart) {
+                showingLastOrder = true
+            }
+            .frame(width: 340)
+        }
+        .inspector(isPresented: $showingLastOrder) {
+            Group {
+                if let order = lastOrder {
+                    LastOrderPanelView(order: order)
+                } else {
+                    ContentUnavailableView(
+                        "No orders yet",
+                        systemImage: "checklist",
+                        description: Text("Charged orders appear here so you can serve them.")
+                    )
+                }
+            }
+            .inspectorColumnWidth(min: 280, ideal: 320, max: 420)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingLastOrder.toggle()
+                } label: {
+                    Label("Last order", systemImage: "checklist")
+                }
+                .disabled(lastOrder == nil)
+            }
         }
     }
 
@@ -48,6 +79,7 @@ struct RegisterView: View {
                 let isSelected = category.persistentModelID == selectedCategory?.persistentModelID
                 Button {
                     selectedCategoryID = category.persistentModelID
+                    showingLastOrder = false
                 } label: {
                     Text(category.name)
                         .font(.headline)
