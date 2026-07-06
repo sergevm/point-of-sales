@@ -5,7 +5,7 @@ import Foundation
 enum ReportCSV {
     static func ordersCSV(session: SaleSession) -> String {
         var rows: [String] = [
-            "report,order_time,items,payment_method,total,rounding_adjustment,voided,void_reason"
+            "report,order_time,items,payment_method,total,rounding_adjustment,voided,void_reason,correction,corrects_order_time,correction_reason"
         ]
 
         for order in session.orders.sorted(by: { $0.createdAt < $1.createdAt }) {
@@ -23,7 +23,10 @@ enum ReportCSV {
                     amount(order.total),
                     amount(order.roundingAdjustment),
                     order.isVoided ? "yes" : "no",
-                    quoted(order.voidReason ?? "")
+                    quoted(order.voidReason ?? ""),
+                    order.isCorrection ? "yes" : "no",
+                    quoted(order.correctedOrder?.createdAt.formatted(.iso8601) ?? ""),
+                    quoted(order.correctionReason ?? "")
                 ].joined(separator: ",")
             )
         }

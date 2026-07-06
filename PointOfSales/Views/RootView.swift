@@ -16,6 +16,10 @@ struct RootView: View {
     @State private var showingHistory = false
     @State private var reportSession: SaleSession?
 
+    /// Order to scroll to when the sales list opens, set when navigating in from
+    /// a linked correction/original in the register's last-order panel.
+    @State private var salesFocusOrderID: PersistentIdentifier?
+
     /// Session whose report should be shown once the sales sheet has finished
     /// dismissing; presenting both at once would drop the second sheet.
     @State private var pendingReportSession: SaleSession?
@@ -26,7 +30,10 @@ struct RootView: View {
         NavigationStack {
             Group {
                 if let session = activeSession {
-                    RegisterView(session: session, cart: cart)
+                    RegisterView(session: session, cart: cart) { order in
+                        salesFocusOrderID = order.persistentModelID
+                        showingSales = true
+                    }
                 } else {
                     StartSessionView()
                 }
@@ -37,11 +44,18 @@ struct RootView: View {
         .sheet(isPresented: $showingConfiguration) {
             ConfigurationView()
         }
-        .sheet(isPresented: $showingSales, onDismiss: presentPendingReport) {
+        .sheet(isPresented: $showingSales, onDismiss: {
+            salesFocusOrderID = nil
+            presentPendingReport()
+        }) {
             if let session = activeSession {
-                SessionSalesView(session: session) { endedSession in
-                    pendingReportSession = endedSession
-                }
+                SessionSalesView(
+                    session: session,
+                    onEnded: { endedSession in
+                        pendingReportSession = endedSession
+                    },
+                    focusOrderID: salesFocusOrderID
+                )
             }
         }
         .sheet(isPresented: $showingHistory) {

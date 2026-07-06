@@ -13,6 +13,10 @@ struct CartPanelView: View {
 
     @Environment(\.modelContext) private var context
     @State private var choosingPayment = false
+    @State private var choosingCorrection = false
+
+    /// Red for a credit ticket, the app accent for a normal sale.
+    private var accent: Color { cart.isCorrection ? .red : .accentColor }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,9 +25,13 @@ struct CartPanelView: View {
 
             if cart.isEmpty {
                 ContentUnavailableView(
-                    "Empty ticket",
-                    systemImage: "cart",
-                    description: Text("Tap products to add them.")
+                    cart.isCorrection ? "Empty credit ticket" : "Empty ticket",
+                    systemImage: cart.isCorrection ? "arrow.uturn.backward.circle" : "cart",
+                    description: Text(
+                        cart.isCorrection
+                            ? "Tap products to credit them back to the client."
+                            : "Tap products to add them."
+                    )
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -39,14 +47,30 @@ struct CartPanelView: View {
             footer
         }
         .background(.background)
+        .sheet(isPresented: $choosingCorrection) {
+            CorrectionChargeSheet(session: session, cart: cart) { method, correctedOrder, reason in
+                charge(method, correctedOrder: correctedOrder, reason: reason)
+            }
+        }
     }
 
     private var header: some View {
         HStack {
-            Text("Current ticket")
+            Text(cart.isCorrection ? "Credit ticket" : "Current ticket")
                 .font(.headline)
+                .foregroundStyle(cart.isCorrection ? .red : .primary)
             Spacer()
-            if !cart.isEmpty {
+            if cart.isEmpty {
+                Picker("Ticket type", selection: Binding(
+                    get: { cart.isCorrection },
+                    set: { cart.isCorrection = $0 }
+                )) {
+                    Text("Sale").tag(false)
+                    Text("Credit").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+            } else {
                 Text("\(cart.itemCount) item\(cart.itemCount == 1 ? "" : "s")")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -87,8 +111,9 @@ struct CartPanelView: View {
             }
             .buttonStyle(.plain)
 
-            Text(line.lineTotal.currencyString)
+            Text((Decimal(cart.sign) * line.lineTotal).currencyString)
                 .font(.body.monospacedDigit())
+                .foregroundStyle(cart.isCorrection ? .red : .primary)
                 .frame(minWidth: 64, alignment: .trailing)
         }
         .swipeActions {
@@ -103,11 +128,12 @@ struct CartPanelView: View {
     private var footer: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Total")
+                Text(cart.isCorrection ? "Credit" : "Total")
                     .font(.title3.bold())
                 Spacer()
-                Text(cart.total.currencyString)
+                Text(cart.signedTotal.currencyString)
                     .font(.title2.bold().monospacedDigit())
+                    .foregroundStyle(cart.isCorrection ? .red : .primary)
             }
 
             HStack(spacing: 12) {
@@ -128,14 +154,18 @@ struct CartPanelView: View {
                 .disabled(cart.isEmpty)
 
                 Button {
-                    choosingPayment = true
+                    if cart.isCorrection {
+                        choosingCorrection = true
+                    } else {
+                        choosingPayment = true
+                    }
                 } label: {
-                    Text("Charge")
+                    Text(cart.isCorrection ? "Charge credit" : "Charge")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                 }
-                .buttonStyle(.prominentDepth(tint: .accentColor))
+                .buttonStyle(.prominentDepth(tint: accent))
                 .disabled(cart.isEmpty)
                 .confirmationDialog(
                     "How is this paid?",
@@ -161,9 +191,20 @@ struct CartPanelView: View {
     }
 
     /// Charges the cart and reveals the recorded order in the register's
-    /// last-order panel, which doubles as the confirmation.
-    private func charge(_ method: PaymentMethod) {
-        guard cart.charge(into: context, session: session, method: method) != nil else { return }
+    /// last-order panel, which doubles as the confirmation. `correctedOrder` and
+    /// `reason` apply only to credit tickets.
+    private func charge(
+        _ method: PaymentMethod,
+        correctedOrder: Order? = nil,
+        reason: String? = nil
+    ) {
+        guard cart.charge(
+            into: context,
+            session: session,
+            method: method,
+            correctedOrder: correctedOrder,
+            reason: reason
+        ) != nil else { return }
         onCharged()
     }
 }

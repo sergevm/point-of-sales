@@ -12,6 +12,9 @@ struct SessionReportDocumentView: View {
             summary
             paymentMethods
             productTable
+            if !report.corrections.isEmpty {
+                correctionsSection
+            }
             if !report.voidedOrders.isEmpty {
                 voidedSection
             }
@@ -65,6 +68,13 @@ struct SessionReportDocumentView: View {
     private var summary: some View {
         VStack(alignment: .leading, spacing: 6) {
             reportRow("Orders", "\(report.orderCount)")
+            if !report.corrections.isEmpty {
+                reportRow("Sales", report.salesTotal.currencyString)
+                reportRow(
+                    "Corrections (\(report.corrections.count))",
+                    report.correctionsTotal.currencyString
+                )
+            }
             reportRow("Gross receipts", report.grossReceipts.currencyString, bold: true)
             if report.roundingTotal != 0 {
                 reportRow("of which cash rounding", report.roundingTotal.currencyString)
@@ -120,6 +130,31 @@ struct SessionReportDocumentView: View {
                 }
             }
         }
+    }
+
+    private var correctionsSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Corrections (credited to clients)")
+                .font(.headline)
+            ForEach(report.corrections) { correction in
+                reportRow(
+                    correctionLabel(correction),
+                    correction.total.currencyString
+                )
+            }
+            reportRow("Corrections total", report.correctionsTotal.currencyString)
+        }
+    }
+
+    private func correctionLabel(_ correction: SessionReport.CorrectionOrder) -> String {
+        var label = correction.time.formatted(date: .omitted, time: .shortened)
+        if let linked = correction.linkedOrderTime {
+            label += " — for \(linked.formatted(date: .omitted, time: .shortened)) order"
+        }
+        if let reason = correction.reason, !reason.isEmpty {
+            label += " (\(reason))"
+        }
+        return label
     }
 
     private var voidedSection: some View {

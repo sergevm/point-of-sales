@@ -31,6 +31,15 @@ struct SessionReport {
         let reason: String?
     }
 
+    struct CorrectionOrder: Identifiable {
+        let id: PersistentIdentifier
+        let time: Date
+        let total: Decimal
+        let reason: String?
+        /// Time of the original order this credit was linked to, if any.
+        let linkedOrderTime: Date?
+    }
+
     let reportNumber: Int
     let sessionName: String
     let startedAt: Date
@@ -41,6 +50,8 @@ struct SessionReport {
     let enterpriseNumber: String
 
     let orderCount: Int
+    let salesTotal: Decimal
+    let correctionsTotal: Decimal
     let grossReceipts: Decimal
     let roundingTotal: Decimal
     let methodTotals: [MethodTotal]
@@ -48,6 +59,7 @@ struct SessionReport {
     let totalCost: Decimal
     let voidedOrders: [VoidedOrder]
     let voidedTotal: Decimal
+    let corrections: [CorrectionOrder]
 
     /// Gross receipts minus the snapshotted cost of goods sold.
     var netRevenue: Decimal { grossReceipts - totalCost }
@@ -72,7 +84,9 @@ struct SessionReport {
 
         let valid = session.validOrders
 
-        orderCount = valid.count
+        orderCount = session.saleOrders.count
+        salesTotal = session.salesTotal
+        correctionsTotal = session.correctionsTotal
         grossReceipts = valid.reduce(.zero) { $0 + $1.total }
         roundingTotal = valid.reduce(.zero) { $0 + $1.roundingAdjustment }
         totalCost = valid.reduce(.zero) { $0 + $1.totalCost }
@@ -115,5 +129,17 @@ struct SessionReport {
                 )
             }
         voidedTotal = session.voidedTotal
+
+        corrections = session.correctionOrders
+            .sorted { $0.createdAt < $1.createdAt }
+            .map {
+                CorrectionOrder(
+                    id: $0.persistentModelID,
+                    time: $0.createdAt,
+                    total: $0.total,
+                    reason: $0.correctionReason,
+                    linkedOrderTime: $0.correctedOrder?.createdAt
+                )
+            }
     }
 }

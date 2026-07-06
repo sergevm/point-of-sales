@@ -7,6 +7,10 @@ struct RegisterView: View {
     let session: SaleSession
     let cart: Cart
 
+    /// Called to reveal a linked order (an original or its credit) in the
+    /// session sales list, for navigating between corrections and their originals.
+    var onShowOrderInSales: (Order) -> Void = { _ in }
+
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
     @State private var selectedCategoryID: PersistentIdentifier?
     @State private var showingLastOrder = false
@@ -44,7 +48,7 @@ struct RegisterView: View {
         .inspector(isPresented: $showingLastOrder) {
             Group {
                 if let order = lastOrder {
-                    LastOrderPanelView(order: order)
+                    LastOrderPanelView(order: order, onShowLinkedOrder: onShowOrderInSales)
                 } else {
                     ContentUnavailableView(
                         "No orders yet",

@@ -8,6 +8,10 @@ import SwiftData
 struct LastOrderPanelView: View {
     let order: Order
 
+    /// Called to reveal a linked order in the session sales list (the original
+    /// this credit corrects, or a credit that corrects this order).
+    var onShowLinkedOrder: (Order) -> Void = { _ in }
+
     private var items: [OrderItem] {
         order.items.sorted { $0.productName < $1.productName }
     }
@@ -24,20 +28,62 @@ struct LastOrderPanelView: View {
             }
             .listStyle(.plain)
 
+            correctionLinks
+
             Divider()
             footer
         }
         .background(.background)
     }
 
+    /// Tappable link between this order and its correction counterpart, when one
+    /// has been marked, so staff can jump to the related ticket in the sales list.
+    @ViewBuilder
+    private var correctionLinks: some View {
+        if order.isCorrection, let original = order.correctedOrder {
+            Divider()
+            Button {
+                onShowLinkedOrder(original)
+            } label: {
+                Label(
+                    "Corrects the \(original.createdAt.formatted(date: .omitted, time: .shortened)) order",
+                    systemImage: "arrow.up.left"
+                )
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.tint)
+        } else if order.hasCorrection, let credit = order.corrections.sorted(by: { $0.createdAt > $1.createdAt }).first {
+            Divider()
+            Button {
+                onShowLinkedOrder(credit)
+            } label: {
+                Label(
+                    "Corrected by a credit ticket — view",
+                    systemImage: "arrow.down.right"
+                )
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.red)
+        }
+    }
+
     private var header: some View {
         HStack(spacing: 10) {
-            Image(systemName: order.paymentMethod.systemImage)
+            Image(systemName: order.isCorrection ? "arrow.uturn.backward.circle" : order.paymentMethod.systemImage)
                 .font(.title3)
-                .foregroundStyle(.tint)
+                .foregroundStyle(order.isCorrection ? Color.red : Color.accentColor)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Last order")
+                Text(order.isCorrection ? "Credit ticket" : "Last order")
                     .font(.headline)
+                    .foregroundStyle(order.isCorrection ? .red : .primary)
                 Text(order.createdAt.formatted(date: .omitted, time: .shortened))
                     .font(.caption)
                     .foregroundStyle(.secondary)
