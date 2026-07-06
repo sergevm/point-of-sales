@@ -55,6 +55,7 @@ struct StartSessionView: View {
             sequenceNumber: SaleSession.nextSequenceNumber(in: context)
         )
         context.insert(session)
+        try? context.save()
         name = ""
     }
 }

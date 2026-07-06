@@ -146,10 +146,14 @@ struct SessionSalesView: View {
         let trimmed = voidReason.trimmingCharacters(in: .whitespacesAndNewlines)
         order.voidReason = trimmed.isEmpty ? nil : trimmed
         voidingOrder = nil
+        try? context.save()
     }
 
     private func endSession() {
         session.endedAt = .now
+        // Closing a session finalizes its report; persist immediately rather
+        // than relying on autosave.
+        try? context.save()
         dismiss()
         onEnded?(session)
     }
