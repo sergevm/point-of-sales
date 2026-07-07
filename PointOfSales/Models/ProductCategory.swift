@@ -16,8 +16,10 @@ final class ProductCategory {
     /// Manual ordering of categories on the register.
     var sortOrder: Int
 
-    /// Products in this category. Deleting a category deletes its products.
-    @Relationship(deleteRule: .cascade, inverse: \Product.category)
+    /// Products in this category. Deleting a category keeps its products;
+    /// they become unassigned and can be re-assigned from another category's
+    /// product list.
+    @Relationship(deleteRule: .nullify, inverse: \Product.category)
     var products: [Product] = []
 
     init(name: String, colorHex: String? = nil, sortOrder: Int = 0) {

@@ -101,7 +101,7 @@ final class SaleSession {
 
         let base = dateFormatter.string(from: date)
         // priorCount sessions already exist today, so this is session priorCount + 1.
-        return priorCount == 0 ? base : "\(base) (session \(priorCount + 1))"
+        return priorCount == 0 ? base : String(localized: "\(base) (session \(priorCount + 1))")
     }
 
     private static let dateFormatter: DateFormatter = {

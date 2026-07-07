@@ -56,6 +56,7 @@ struct ProductGridView: View {
                             )
                         }
                         .buttonStyle(.depth(tint.opacity(0.5)))
+                        .accessibilityLabel(Text("Add \(product.name), \(product.price.currencyString)"))
                     }
                 }
                 .padding(12)

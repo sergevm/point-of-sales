@@ -84,6 +84,9 @@ final class Cart {
     /// For a credit ticket (``isCorrection``) the line items are stored with
     /// negative quantities so every downstream total nets correctly, and an
     /// optional `correctedOrder`/`reason` records the link and rationale.
+    ///
+    /// Throws when the order cannot be saved; the ticket is kept intact so the
+    /// seller can retry.
     @discardableResult
     func charge(
         into context: ModelContext,
@@ -91,7 +94,7 @@ final class Cart {
         method: PaymentMethod,
         correctedOrder: Order? = nil,
         reason: String? = nil
-    ) -> Order? {
+    ) throws -> Order? {
         guard !isEmpty else { return nil }
 
         let charged = chargeTotal(for: method)
@@ -120,7 +123,14 @@ final class Cart {
 
         // Flush to disk immediately: a charged order must not be lost to
         // autosave timing if the app is killed right after the sale.
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            // Take the failed order back out so it doesn't linger in the UI or
+            // get picked up by a later autosave; deleting it cascades to its items.
+            context.delete(order)
+            throw error
+        }
 
         clear()
         return order

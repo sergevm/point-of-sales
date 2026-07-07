@@ -10,6 +10,7 @@ struct ConfigurationView: View {
 
     @State private var editingCategory: ProductCategory?
     @State private var creatingCategory = false
+    @State private var pendingDeletion: IndexSet?
 
     var body: some View {
         NavigationStack {
@@ -29,7 +30,7 @@ struct ConfigurationView: View {
                             categoryRow(category)
                         }
                     }
-                    .onDelete(perform: deleteCategories)
+                    .onDelete { offsets in pendingDeletion = offsets }
                     .onMove(perform: moveCategories)
                 }
 
@@ -64,7 +65,33 @@ struct ConfigurationView: View {
             .sheet(item: $editingCategory) { category in
                 CategoryEditView(category: category, nextSortOrder: categories.count)
             }
+            .confirmationDialog(
+                deletionTitle,
+                isPresented: Binding(
+                    get: { pendingDeletion != nil },
+                    set: { if !$0 { pendingDeletion = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete category", role: .destructive, action: deletePendingCategories)
+                Button("Cancel", role: .cancel) { pendingDeletion = nil }
+            } message: {
+                Text("Its products are kept and become unassigned. You can re-assign them from any category's product list.")
+            }
         }
+    }
+
+    private var deletionTitle: Text {
+        let pending = pendingCategories
+        if pending.count == 1, let category = pending.first {
+            return Text("Delete “\(category.name)”?")
+        }
+        return Text("Delete \(pending.count) categories?")
+    }
+
+    private var pendingCategories: [ProductCategory] {
+        guard let pendingDeletion else { return [] }
+        return pendingDeletion.compactMap { categories.indices.contains($0) ? categories[$0] : nil }
     }
 
     private func categoryRow(_ category: ProductCategory) -> some View {
@@ -85,10 +112,11 @@ struct ConfigurationView: View {
         }
     }
 
-    private func deleteCategories(_ offsets: IndexSet) {
-        for index in offsets {
-            context.delete(categories[index])
+    private func deletePendingCategories() {
+        for category in pendingCategories {
+            context.delete(category)
         }
+        pendingDeletion = nil
     }
 
     private func moveCategories(_ offsets: IndexSet, _ destination: Int) {

@@ -30,7 +30,7 @@ struct SessionReportDocumentView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(report.organizationName.isEmpty ? "Session report" : report.organizationName)
+                    Text(report.organizationName.isEmpty ? String(localized: "Session report") : report.organizationName)
                         .font(.title2.bold())
                     if !report.organizationAddress.isEmpty {
                         Text(report.organizationAddress)
@@ -62,25 +62,25 @@ struct SessionReportDocumentView: View {
         if let end = report.endedAt {
             return "\(start) – \(end.formatted(date: .omitted, time: .shortened))"
         }
-        return "\(start) – session still open"
+        return String(localized: "\(start) – session still open")
     }
 
     private var summary: some View {
         VStack(alignment: .leading, spacing: 6) {
-            reportRow("Orders", "\(report.orderCount)")
+            reportRow(String(localized: "Orders"), "\(report.orderCount)")
             if !report.corrections.isEmpty {
-                reportRow("Sales", report.salesTotal.currencyString)
+                reportRow(String(localized: "Sales"), report.salesTotal.currencyString)
                 reportRow(
-                    "Corrections (\(report.corrections.count))",
+                    String(localized: "Corrections (\(report.corrections.count))"),
                     report.correctionsTotal.currencyString
                 )
             }
-            reportRow("Gross receipts", report.grossReceipts.currencyString, bold: true)
+            reportRow(String(localized: "Gross receipts"), report.grossReceipts.currencyString, bold: true)
             if report.roundingTotal != 0 {
-                reportRow("of which cash rounding", report.roundingTotal.currencyString)
+                reportRow(String(localized: "of which cash rounding"), report.roundingTotal.currencyString)
             }
-            reportRow("Cost of goods sold", report.totalCost.currencyString)
-            reportRow("Net revenue", report.netRevenue.currencyString, bold: true)
+            reportRow(String(localized: "Cost of goods sold"), report.totalCost.currencyString)
+            reportRow(String(localized: "Net revenue"), report.netRevenue.currencyString, bold: true)
         }
     }
 
@@ -142,14 +142,14 @@ struct SessionReportDocumentView: View {
                     correction.total.currencyString
                 )
             }
-            reportRow("Corrections total", report.correctionsTotal.currencyString)
+            reportRow(String(localized: "Corrections total"), report.correctionsTotal.currencyString)
         }
     }
 
     private func correctionLabel(_ correction: SessionReport.CorrectionOrder) -> String {
         var label = correction.time.formatted(date: .omitted, time: .shortened)
         if let linked = correction.linkedOrderTime {
-            label += " — for \(linked.formatted(date: .omitted, time: .shortened)) order"
+            label += String(localized: " — for the \(linked.formatted(date: .omitted, time: .shortened)) order")
         }
         if let reason = correction.reason, !reason.isEmpty {
             label += " (\(reason))"
@@ -164,16 +164,16 @@ struct SessionReportDocumentView: View {
             ForEach(report.voidedOrders) { voided in
                 reportRow(
                     "\(voided.time.formatted(date: .omitted, time: .shortened))"
-                        + " — \(voided.reason ?? "no reason given")",
+                        + " — \(voided.reason ?? String(localized: "no reason given"))",
                     voided.total.currencyString
                 )
             }
-            reportRow("Voided total", report.voidedTotal.currencyString)
+            reportRow(String(localized: "Voided total"), report.voidedTotal.currencyString)
         }
     }
 
     private var footer: some View {
-        Text("Bijzondere vrijstellingsregeling kleine ondernemingen — no VAT charged.")
+        Text("Special VAT exemption scheme for small businesses — no VAT charged.")
             .font(.caption2)
             .foregroundStyle(.secondary)
     }

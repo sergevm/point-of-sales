@@ -12,9 +12,9 @@ enum PaymentMethod: String, CaseIterable, Identifiable, Codable {
 
     var displayName: String {
         switch self {
-        case .cash: "Cash"
-        case .card: "Card"
-        case .payconiq: "Payconiq"
+        case .cash: String(localized: "Cash")
+        case .card: String(localized: "Card")
+        case .payconiq: "Payconiq" // Brand name, never translated.
         }
     }
 

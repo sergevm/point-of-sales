@@ -83,7 +83,7 @@ struct RootView: View {
                     Image(systemName: "cart.fill")
                         .foregroundStyle(.tint)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(session.name ?? "Session")
+                        Text(session.name ?? String(localized: "Session"))
                             .font(.headline)
                             .lineLimit(1)
                         Text("Started \(session.startedAt.formatted(date: .omitted, time: .shortened))")

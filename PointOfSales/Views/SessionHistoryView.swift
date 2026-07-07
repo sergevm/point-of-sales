@@ -52,7 +52,7 @@ struct SessionHistoryView: View {
     private func sessionRow(_ session: SaleSession) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("#\(session.sequenceNumber)  \(session.name ?? "Session")")
+                Text("#\(session.sequenceNumber)  \(session.name ?? String(localized: "Session"))")
                     .font(.body.weight(.medium))
                 Text(session.startedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
@@ -62,7 +62,7 @@ struct SessionHistoryView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(session.total.currencyString)
                     .font(.body.monospacedDigit())
-                Text("\(session.orderCount) order\(session.orderCount == 1 ? "" : "s")")
+                Text("\(session.orderCount) orders")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

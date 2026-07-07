@@ -9,6 +9,8 @@ struct CategoryEditView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
+    @Query private var allCategories: [ProductCategory]
+
     @State private var name: String
     @State private var colorHex: String?
 
@@ -25,11 +27,26 @@ struct CategoryEditView: View {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Category names are unique; catching a duplicate here beats the silent
+    /// save failure the unique constraint would produce otherwise.
+    private var isDuplicateName: Bool {
+        allCategories.contains {
+            $0 !== category && $0.name.caseInsensitiveCompare(trimmedName) == .orderedSame
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section("Name") {
+                Section {
                     TextField("Category name", text: $name)
+                } header: {
+                    Text("Name")
+                } footer: {
+                    if isDuplicateName {
+                        Text("A category with this name already exists.")
+                            .foregroundStyle(.red)
+                    }
                 }
                 Section("Colour") {
                     swatchGrid
@@ -43,7 +60,7 @@ struct CategoryEditView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
-                        .disabled(trimmedName.isEmpty)
+                        .disabled(trimmedName.isEmpty || isDuplicateName)
                 }
             }
         }
@@ -63,6 +80,9 @@ struct CategoryEditView: View {
                         }
                     }
                     .onTapGesture { colorHex = hex }
+                    .accessibilityElement()
+                    .accessibilityLabel(Text("Colour \(hex)"))
+                    .accessibilityAddTraits(hex == colorHex ? [.isButton, .isSelected] : .isButton)
             }
         }
         .padding(.vertical, 4)

@@ -7,6 +7,7 @@ struct StartSessionView: View {
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
     @State private var name = ""
+    @State private var startFailed = false
 
     private var hasProducts: Bool {
         categories.contains { !$0.products.isEmpty }
@@ -45,6 +46,11 @@ struct StartSessionView: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .alert("Session could not be started", isPresented: $startFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Please try again.")
+        }
     }
 
     private func startSession() {
@@ -55,7 +61,12 @@ struct StartSessionView: View {
             sequenceNumber: SaleSession.nextSequenceNumber(in: context)
         )
         context.insert(session)
-        try? context.save()
-        name = ""
+        do {
+            try context.save()
+            name = ""
+        } catch {
+            context.delete(session)
+            startFailed = true
+        }
     }
 }

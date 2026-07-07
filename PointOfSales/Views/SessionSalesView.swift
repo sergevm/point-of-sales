@@ -21,13 +21,14 @@ struct SessionSalesView: View {
     @State private var voidingOrder: Order?
     @State private var voidReason = ""
     @State private var highlightedOrderID: PersistentIdentifier?
+    @State private var saveFailed = false
 
     private var orders: [Order] { session.ordersByNewest }
 
     var body: some View {
         NavigationStack {
             content
-            .navigationTitle(session.name ?? "Current session")
+            .navigationTitle(session.name ?? String(localized: "Current session"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -59,6 +60,11 @@ struct SessionSalesView: View {
                 Button("Cancel", role: .cancel) { voidingOrder = nil }
             } message: {
                 Text("The order stays on record but no longer counts towards receipts.")
+            }
+            .alert("Change could not be saved", isPresented: $saveFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Please try again.")
             }
         }
     }
@@ -101,9 +107,9 @@ struct SessionSalesView: View {
 
     private var summaryHeader: some View {
         HStack {
-            Text("\(session.orderCount) order\(session.orderCount == 1 ? "" : "s")")
+            Text("\(session.orderCount) orders")
             if session.correctionCount > 0 {
-                Text("· \(session.correctionCount) credit\(session.correctionCount == 1 ? "" : "s") \(session.correctionsTotal.currencyString)")
+                Text("· \(session.correctionCount) credits \(session.correctionsTotal.currencyString)")
                     .foregroundStyle(.red)
             }
             if session.voidedCount > 0 {
@@ -127,7 +133,7 @@ struct SessionSalesView: View {
             correctionLinks(order)
             if order.isVoided {
                 Label(
-                    "Voided — \(order.voidReason?.isEmpty == false ? order.voidReason! : "no reason given")",
+                    "Voided — \(order.voidReason ?? String(localized: "no reason given"))",
                     systemImage: "xmark.circle"
                 )
                 .font(.caption)
@@ -155,6 +161,7 @@ struct SessionSalesView: View {
             Image(systemName: order.paymentMethod.systemImage)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel(Text("Paid by \(order.paymentMethod.displayName)"))
             if order.isCorrection {
                 Text("Credit")
                     .font(.caption2.bold())
@@ -229,14 +236,27 @@ struct SessionSalesView: View {
         let trimmed = voidReason.trimmingCharacters(in: .whitespacesAndNewlines)
         order.voidReason = trimmed.isEmpty ? nil : trimmed
         voidingOrder = nil
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            // Only never-voided orders can be voided, so reverting means clearing.
+            order.voidedAt = nil
+            order.voidReason = nil
+            saveFailed = true
+        }
     }
 
     private func endSession() {
         session.endedAt = .now
         // Closing a session finalizes its report; persist immediately rather
         // than relying on autosave.
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            session.endedAt = nil
+            saveFailed = true
+            return
+        }
         dismiss()
         onEnded?(session)
     }

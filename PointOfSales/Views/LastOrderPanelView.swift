@@ -80,6 +80,7 @@ struct LastOrderPanelView: View {
             Image(systemName: order.isCorrection ? "arrow.uturn.backward.circle" : order.paymentMethod.systemImage)
                 .font(.title3)
                 .foregroundStyle(order.isCorrection ? Color.red : Color.accentColor)
+                .accessibilityLabel(Text("Paid by \(order.paymentMethod.displayName)"))
             VStack(alignment: .leading, spacing: 2) {
                 Text(order.isCorrection ? "Credit ticket" : "Last order")
                     .font(.headline)

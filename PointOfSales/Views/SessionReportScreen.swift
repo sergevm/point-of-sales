@@ -13,6 +13,7 @@ struct SessionReportScreen: View {
 
     @State private var showingMail = false
     @State private var attachmentURLs: [URL] = []
+    @State private var attachmentError: String?
 
     private var settings: OrganizationSettings? { allSettings.first }
 
@@ -22,12 +23,17 @@ struct SessionReportScreen: View {
 
     var body: some View {
         ScrollView {
-            SessionReportDocumentView(report: report)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(radius: 2)
-                .padding()
-                .frame(maxWidth: 700)
-                .frame(maxWidth: .infinity)
+            VStack(spacing: 0) {
+                if attachmentError != nil {
+                    attachmentErrorBanner
+                }
+                SessionReportDocumentView(report: report)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(radius: 2)
+                    .padding()
+            }
+            .frame(maxWidth: 700)
+            .frame(maxWidth: .infinity)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(session.displayName)
@@ -40,6 +46,7 @@ struct SessionReportScreen: View {
                     } label: {
                         Label("Email to bookkeeper", systemImage: "envelope")
                     }
+                    .disabled(attachmentURLs.isEmpty)
                 }
                 ShareLink(
                     items: attachmentURLs,
@@ -63,18 +70,41 @@ struct SessionReportScreen: View {
         }
     }
 
+    /// Shown when the PDF/CSV files could not be created, so the user knows why
+    /// sharing is unavailable and can retry.
+    private var attachmentErrorBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("The report files could not be created.")
+                    .font(.subheadline.weight(.semibold))
+                if let attachmentError {
+                    Text(attachmentError)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            Button("Try again") { prepareAttachmentFiles() }
+        }
+        .padding(12)
+        .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+        .padding([.horizontal, .top])
+    }
+
     private var recipients: [String] {
         let email = settings?.bookkeeperEmail.trimmingCharacters(in: .whitespaces) ?? ""
         return email.isEmpty ? [] : [email]
     }
 
     private var mailSubject: String {
-        "Session report — \(session.displayName)"
+        String(localized: "Session report — \(session.displayName)")
     }
 
     private var mailBody: String {
         let report = report
-        return """
+        return String(localized: """
         Hi,
 
         Attached is session report \(report.sessionName) \
@@ -85,22 +115,20 @@ struct SessionReportScreen: View {
         Cash: \(report.cashTotal.currencyString) — Electronic: \(report.electronicTotal.currencyString)
 
         PDF for the records, CSV for import.
-        """
+        """)
     }
 
+    /// Reuses the files written by `prepareAttachmentFiles()` so the mail and
+    /// share flows always offer the same attachments.
     private func mailAttachments() -> [MailComposer.Attachment] {
-        [
-            MailComposer.Attachment(
-                data: ReportPDF.data(for: report),
-                mimeType: "application/pdf",
-                fileName: pdfFileName
-            ),
-            MailComposer.Attachment(
-                data: Data(ReportCSV.ordersCSV(session: session).utf8),
-                mimeType: "text/csv",
-                fileName: csvFileName
+        attachmentURLs.compactMap { url in
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            return MailComposer.Attachment(
+                data: data,
+                mimeType: url.pathExtension == "pdf" ? "application/pdf" : "text/csv",
+                fileName: url.lastPathComponent
             )
-        ]
+        }
     }
 
     private var pdfFileName: String { "session-report-\(session.sequenceNumber).pdf" }
@@ -116,8 +144,10 @@ struct SessionReportScreen: View {
             try ReportPDF.data(for: report).write(to: pdfURL)
             try Data(ReportCSV.ordersCSV(session: session).utf8).write(to: csvURL)
             attachmentURLs = [pdfURL, csvURL]
+            attachmentError = nil
         } catch {
             attachmentURLs = []
+            attachmentError = error.localizedDescription
         }
     }
 }

@@ -94,6 +94,8 @@ struct RegisterView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.depth(color.opacity(isSelected ? 0.45 : 0.15)))
+                .accessibilityLabel(Text(category.name))
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

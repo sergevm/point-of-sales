@@ -10,10 +10,13 @@ struct ProductEditView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
+    @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
+
     @State private var name: String
     @State private var price: Decimal
     @State private var costPrice: Decimal
     @State private var isActive: Bool
+    @State private var selectedCategory: ProductCategory?
 
     init(product: Product?, category: ProductCategory, nextSortOrder: Int) {
         self.product = product
@@ -23,6 +26,7 @@ struct ProductEditView: View {
         _price = State(initialValue: product?.price ?? 0)
         _costPrice = State(initialValue: product?.costPrice ?? 0)
         _isActive = State(initialValue: product?.isActive ?? true)
+        _selectedCategory = State(initialValue: product?.category ?? category)
     }
 
     private var isEditing: Bool { product != nil }
@@ -31,15 +35,30 @@ struct ProductEditView: View {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Another product with the same name in the chosen category.
+    private var isDuplicateName: Bool {
+        guard let selectedCategory else { return false }
+        return selectedCategory.products.contains {
+            $0 !== product && $0.name.caseInsensitiveCompare(trimmedName) == .orderedSame
+        }
+    }
+
     private var canSave: Bool {
-        !trimmedName.isEmpty && price > 0
+        !trimmedName.isEmpty && price > 0 && costPrice >= 0 && !isDuplicateName
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Name") {
+                Section {
                     TextField("Product name", text: $name)
+                } header: {
+                    Text("Name")
+                } footer: {
+                    if isDuplicateName {
+                        Text("A product with this name already exists in this category.")
+                            .foregroundStyle(.red)
+                    }
                 }
                 Section("Price") {
                     TextField(
@@ -59,7 +78,24 @@ struct ProductEditView: View {
                 } header: {
                     Text("Cost price")
                 } footer: {
-                    Text("What you pay per unit to stock this product. Used for net-revenue reporting; never shown on the register.")
+                    if costPrice < 0 {
+                        Text("The cost price can't be negative.")
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("What you pay per unit to stock this product. Used for net-revenue reporting; never shown on the register.")
+                    }
+                }
+                Section {
+                    Picker("Category", selection: $selectedCategory) {
+                        Text("None").tag(ProductCategory?.none)
+                        ForEach(categories) { category in
+                            Text(category.name).tag(Optional(category))
+                        }
+                    }
+                } footer: {
+                    if selectedCategory == nil {
+                        Text("Without a category this product won't appear on the register.")
+                    }
                 }
                 Section {
                     Toggle("Available on register", isOn: $isActive)
@@ -87,13 +123,14 @@ struct ProductEditView: View {
             product.price = price
             product.costPrice = costPrice
             product.isActive = isActive
+            product.category = selectedCategory
         } else {
             let new = Product(
                 name: trimmedName,
                 price: price,
                 sortOrder: nextSortOrder,
                 isActive: isActive,
-                category: category
+                category: selectedCategory
             )
             new.costPrice = costPrice
             context.insert(new)

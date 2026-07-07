@@ -34,7 +34,7 @@ struct DailyReceiptsView: View {
                 total.cash += order.total
             }
             total.orderCount += 1
-            if order.items.contains(where: { $0.unitPrice > 250 }) {
+            if order.items.contains(where: { $0.unitPrice > BelgianReporting.largeSaleUnitPrice }) {
                 total.hasLargeSale = true
             }
             byDay[day] = total
@@ -75,7 +75,10 @@ struct DailyReceiptsView: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 if day.hasLargeSale {
-                    Label("Sale over €250", systemImage: "exclamationmark.triangle")
+                    Label(
+                        "Sale over \(BelgianReporting.largeSaleUnitPrice.currencyString)",
+                        systemImage: "exclamationmark.triangle"
+                    )
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }

@@ -14,6 +14,8 @@ struct CartPanelView: View {
     @Environment(\.modelContext) private var context
     @State private var choosingPayment = false
     @State private var choosingCorrection = false
+    @State private var confirmingClear = false
+    @State private var chargeFailed = false
 
     /// Red for a credit ticket, the app accent for a normal sale.
     private var accent: Color { cart.isCorrection ? .red : .accentColor }
@@ -52,6 +54,11 @@ struct CartPanelView: View {
                 charge(method, correctedOrder: correctedOrder, reason: reason)
             }
         }
+        .alert("Order could not be saved", isPresented: $chargeFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The ticket was kept. Please try charging again.")
+        }
     }
 
     private var header: some View {
@@ -71,7 +78,7 @@ struct CartPanelView: View {
                 .pickerStyle(.segmented)
                 .fixedSize()
             } else {
-                Text("\(cart.itemCount) item\(cart.itemCount == 1 ? "" : "s")")
+                Text("\(cart.itemCount) items")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -98,10 +105,12 @@ struct CartPanelView: View {
                     .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("Remove one \(line.product.name)"))
 
             Text("\(line.quantity)")
                 .font(.body.monospacedDigit())
                 .frame(minWidth: 24)
+                .accessibilityLabel(Text("Quantity \(line.quantity)"))
 
             Button {
                 cart.increment(line)
@@ -110,6 +119,7 @@ struct CartPanelView: View {
                     .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("Add one \(line.product.name)"))
 
             Text((Decimal(cart.sign) * line.lineTotal).currencyString)
                 .font(.body.monospacedDigit())
@@ -138,7 +148,7 @@ struct CartPanelView: View {
 
             HStack(spacing: 12) {
                 Button(role: .destructive) {
-                    cart.clear()
+                    confirmingClear = true
                 } label: {
                     Text("Clear")
                         .font(.headline)
@@ -152,6 +162,16 @@ struct CartPanelView: View {
                 }
                 .buttonStyle(.depth(.red.opacity(0.25)))
                 .disabled(cart.isEmpty)
+                .confirmationDialog(
+                    "Clear all items from this ticket?",
+                    isPresented: $confirmingClear,
+                    titleVisibility: .visible
+                ) {
+                    Button("Clear ticket", role: .destructive) {
+                        cart.clear()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                }
 
                 Button {
                     if cart.isCorrection {
@@ -198,13 +218,17 @@ struct CartPanelView: View {
         correctedOrder: Order? = nil,
         reason: String? = nil
     ) {
-        guard cart.charge(
-            into: context,
-            session: session,
-            method: method,
-            correctedOrder: correctedOrder,
-            reason: reason
-        ) != nil else { return }
-        onCharged()
+        do {
+            guard try cart.charge(
+                into: context,
+                session: session,
+                method: method,
+                correctedOrder: correctedOrder,
+                reason: reason
+            ) != nil else { return }
+            onCharged()
+        } catch {
+            chargeFailed = true
+        }
     }
 }
