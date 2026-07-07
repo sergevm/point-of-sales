@@ -156,8 +156,13 @@ struct SessionSalesView: View {
 
     private func orderRowHeader(_ order: Order) -> some View {
         HStack {
+            if let number = order.numberLabel {
+                Text(verbatim: number)
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+            }
             Text(order.createdAt.formatted(date: .omitted, time: .standard))
-                .font(.subheadline.weight(.semibold))
+                .font(.subheadline.weight(order.hasTicketNumber ? .regular : .semibold))
+                .foregroundStyle(order.hasTicketNumber ? .secondary : .primary)
             Image(systemName: order.paymentMethod.systemImage)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -205,7 +210,7 @@ struct SessionSalesView: View {
                 highlightedOrderID = original.persistentModelID
             } label: {
                 Label(
-                    "Corrects the \(original.createdAt.formatted(date: .omitted, time: .shortened)) order",
+                    "Corrects order \(original.referenceLabel)",
                     systemImage: "arrow.up.left"
                 )
                 .font(.caption)
@@ -219,7 +224,7 @@ struct SessionSalesView: View {
                     highlightedOrderID = credit.persistentModelID
                 } label: {
                     Label(
-                        "Corrected by the \(credit.createdAt.formatted(date: .omitted, time: .shortened)) credit",
+                        "Corrected by credit \(credit.referenceLabel)",
                         systemImage: "arrow.down.right"
                     )
                     .font(.caption)

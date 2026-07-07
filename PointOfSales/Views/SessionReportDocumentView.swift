@@ -147,9 +147,9 @@ struct SessionReportDocumentView: View {
     }
 
     private func correctionLabel(_ correction: SessionReport.CorrectionOrder) -> String {
-        var label = correction.time.formatted(date: .omitted, time: .shortened)
-        if let linked = correction.linkedOrderTime {
-            label += String(localized: " — for the \(linked.formatted(date: .omitted, time: .shortened)) order")
+        var label = Order.ticketLabel(number: correction.number, time: correction.time)
+        if let linked = correction.linkedOrderReference {
+            label += String(localized: " — for order \(linked)")
         }
         if let reason = correction.reason, !reason.isEmpty {
             label += " (\(reason))"
@@ -163,7 +163,7 @@ struct SessionReportDocumentView: View {
                 .font(.headline)
             ForEach(report.voidedOrders) { voided in
                 reportRow(
-                    "\(voided.time.formatted(date: .omitted, time: .shortened))"
+                    Order.ticketLabel(number: voided.number, time: voided.time)
                         + " — \(voided.reason ?? String(localized: "no reason given"))",
                     voided.total.currencyString
                 )

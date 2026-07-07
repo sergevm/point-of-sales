@@ -26,6 +26,8 @@ struct SessionReport {
 
     struct VoidedOrder: Identifiable {
         let id: PersistentIdentifier
+        /// Per-session ticket number; 0 for legacy orders that predate numbering.
+        let number: Int
         let time: Date
         let total: Decimal
         let reason: String?
@@ -33,11 +35,14 @@ struct SessionReport {
 
     struct CorrectionOrder: Identifiable {
         let id: PersistentIdentifier
+        /// Per-session ticket number; 0 for legacy orders that predate numbering.
+        let number: Int
         let time: Date
         let total: Decimal
         let reason: String?
-        /// Time of the original order this credit was linked to, if any.
-        let linkedOrderTime: Date?
+        /// Reference of the original order this credit was linked to, if any,
+        /// e.g. "#3" (charge time for legacy orders).
+        let linkedOrderReference: String?
     }
 
     let reportNumber: Int
@@ -123,6 +128,7 @@ struct SessionReport {
             .map {
                 VoidedOrder(
                     id: $0.persistentModelID,
+                    number: $0.sequenceNumber,
                     time: $0.createdAt,
                     total: $0.total,
                     reason: $0.voidReason
@@ -135,10 +141,11 @@ struct SessionReport {
             .map {
                 CorrectionOrder(
                     id: $0.persistentModelID,
+                    number: $0.sequenceNumber,
                     time: $0.createdAt,
                     total: $0.total,
                     reason: $0.correctionReason,
-                    linkedOrderTime: $0.correctedOrder?.createdAt
+                    linkedOrderReference: $0.correctedOrder?.referenceLabel
                 )
             }
     }

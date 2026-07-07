@@ -99,6 +99,7 @@ final class Cart {
 
         let charged = chargeTotal(for: method)
         let order = Order(
+            sequenceNumber: session.nextTicketNumber,
             total: charged,
             paymentMethod: method,
             roundingAdjustment: charged - signedTotal,

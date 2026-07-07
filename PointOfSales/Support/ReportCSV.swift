@@ -5,7 +5,7 @@ import Foundation
 enum ReportCSV {
     static func ordersCSV(session: SaleSession) -> String {
         var rows: [String] = [
-            "report,order_time,items,payment_method,total,rounding_adjustment,voided,void_reason,correction,corrects_order_time,correction_reason"
+            "report,order_number,order_time,items,payment_method,total,rounding_adjustment,voided,void_reason,correction,corrects_order_number,corrects_order_time,correction_reason"
         ]
 
         for order in session.orders.sorted(by: { $0.createdAt < $1.createdAt }) {
@@ -17,6 +17,7 @@ enum ReportCSV {
             rows.append(
                 [
                     "\(session.sequenceNumber)",
+                    number(of: order),
                     order.createdAt.formatted(.iso8601),
                     quoted(items),
                     order.paymentMethod.rawValue,
@@ -25,6 +26,7 @@ enum ReportCSV {
                     order.isVoided ? "yes" : "no",
                     quoted(order.voidReason ?? ""),
                     order.isCorrection ? "yes" : "no",
+                    number(of: order.correctedOrder),
                     quoted(order.correctedOrder?.createdAt.formatted(.iso8601) ?? ""),
                     quoted(order.correctionReason ?? "")
                 ].joined(separator: ",")
@@ -32,6 +34,12 @@ enum ReportCSV {
         }
 
         return rows.joined(separator: "\n") + "\n"
+    }
+
+    /// Legacy orders recorded before ticket numbering export as an empty field.
+    private static func number(of order: Order?) -> String {
+        guard let order, order.hasTicketNumber else { return "" }
+        return "\(order.sequenceNumber)"
     }
 
     private static func amount(_ value: Decimal) -> String {
