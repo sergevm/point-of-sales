@@ -1,7 +1,9 @@
 # Point of Sale
 
-A simple iPad point-of-sale / cash register app for a small club bar, where orders are
-taken at the bar on a single iPad. Built with SwiftUI and SwiftData, landscape-only.
+A simple point-of-sale / cash register app for a small club bar, where orders are
+taken at the bar on a single device. Built with SwiftUI and SwiftData. Runs on iPad
+(landscape, with the ticket beside the register) and iPhone (with the ticket in a sheet
+behind a bottom summary bar).
 
 ## Features
 
@@ -18,11 +20,11 @@ a product later never alters past sales.
 ## Requirements
 
 - Xcode 16+ (developed against Xcode 26)
-- iOS 17+ iPad (landscape)
+- iOS 17+ iPhone or iPad (iPad is landscape-only)
 
 ## Running
 
-Open `PointOfSales.xcodeproj` in Xcode, select an iPad simulator (or device), and run.
+Open `PointOfSales.xcodeproj` in Xcode, select an iPhone or iPad simulator (or device), and run.
 
 ## Project structure
 

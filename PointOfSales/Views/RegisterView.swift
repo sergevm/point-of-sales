@@ -1,8 +1,11 @@
 import SwiftUI
 import SwiftData
 
-/// The main register: categories + product grid on the left, current ticket on
-/// the right. Designed for landscape iPad.
+/// The main register. In a regular-width layout (iPad, large iPhones in
+/// landscape) the categories + product grid sit on the left with the current
+/// ticket permanently on the right and the last order in an inspector. In a
+/// compact-width layout (iPhone) the grid fills the screen, a bottom bar
+/// summarizes the ticket, and both the ticket and the last order open as sheets.
 struct RegisterView: View {
     let session: SaleSession
     let cart: Cart
@@ -11,9 +14,21 @@ struct RegisterView: View {
     /// session sales list, for navigating between corrections and their originals.
     var onShowOrderInSales: (Order) -> Void = { _ in }
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
     @State private var selectedCategoryID: PersistentIdentifier?
     @State private var showingLastOrder = false
+    @State private var showingCart = false
+
+    /// Compact only: an order was charged from the cart sheet, so the last-order
+    /// sheet should be presented once the cart sheet has finished dismissing;
+    /// presenting both at once would drop the second sheet.
+    @State private var showLastOrderAfterCart = false
+
+    /// Compact only: linked order to reveal in the sales list once the
+    /// last-order sheet has finished dismissing, for the same reason.
+    @State private var pendingLinkedOrder: Order?
 
     private var selectedCategory: ProductCategory? {
         if let id = selectedCategoryID,
@@ -23,18 +38,38 @@ struct RegisterView: View {
         return categories.first
     }
 
-    /// The most recently charged order in this session, shown in the inspector.
+    /// The most recently charged order in this session, shown in the
+    /// inspector (regular) or the last-order sheet (compact).
     private var lastOrder: Order? { session.ordersByNewest.first }
 
     var body: some View {
+        Group {
+            if horizontalSizeClass == .compact {
+                compactLayout
+            } else {
+                regularLayout
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingLastOrder.toggle()
+                } label: {
+                    Label("Last order", systemImage: "checklist")
+                }
+                .disabled(lastOrder == nil)
+            }
+        }
+    }
+
+    // MARK: - Regular width (iPad)
+
+    private var regularLayout: some View {
         HStack(spacing: 0) {
             VStack(spacing: 0) {
                 categoryBar
                 Divider()
-                ProductGridView(category: selectedCategory) { product in
-                    cart.add(product)
-                    showingLastOrder = false
-                }
+                productGrid
             }
             .frame(maxWidth: .infinity)
 
@@ -46,27 +81,102 @@ struct RegisterView: View {
             .frame(width: 340)
         }
         .inspector(isPresented: $showingLastOrder) {
-            Group {
-                if let order = lastOrder {
-                    LastOrderPanelView(order: order, onShowLinkedOrder: onShowOrderInSales)
-                } else {
-                    ContentUnavailableView(
-                        "No orders yet",
-                        systemImage: "checklist",
-                        description: Text("Charged orders appear here so you can serve them.")
-                    )
-                }
+            lastOrderContent { order in
+                onShowOrderInSales(order)
             }
             .inspectorColumnWidth(min: 280, ideal: 320, max: 420)
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingLastOrder.toggle()
-                } label: {
-                    Label("Last order", systemImage: "checklist")
+    }
+
+    // MARK: - Compact width (iPhone)
+
+    private var compactLayout: some View {
+        VStack(spacing: 0) {
+            categoryBar
+            Divider()
+            productGrid
+            Divider()
+            ticketBar
+        }
+        .sheet(isPresented: $showingCart, onDismiss: {
+            if showLastOrderAfterCart {
+                showLastOrderAfterCart = false
+                showingLastOrder = true
+            }
+        }) {
+            CartPanelView(session: session, cart: cart) {
+                showLastOrderAfterCart = true
+                showingCart = false
+            }
+        }
+        .sheet(isPresented: $showingLastOrder, onDismiss: {
+            if let order = pendingLinkedOrder {
+                pendingLinkedOrder = nil
+                onShowOrderInSales(order)
+            }
+        }) {
+            lastOrderContent { order in
+                pendingLinkedOrder = order
+                showingLastOrder = false
+            }
+            .presentationDetents([.medium, .large])
+        }
+    }
+
+    /// Bottom summary of the ticket being built; tapping it opens the full
+    /// cart sheet (also when empty, to switch between sale and credit).
+    private var ticketBar: some View {
+        Button {
+            showingCart = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: cart.isCorrection ? "arrow.uturn.backward.circle" : "cart.fill")
+                    .font(.title3)
+                    .foregroundStyle(cart.isCorrection ? Color.red : Color.accentColor)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(cart.isCorrection ? "Credit ticket" : "Current ticket")
+                        .font(.headline)
+                        .foregroundStyle(cart.isCorrection ? .red : .primary)
+                    Text("\(cart.itemCount) items")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .disabled(lastOrder == nil)
+                Spacer()
+                Text(cart.signedTotal.currencyString)
+                    .font(.title3.bold().monospacedDigit())
+                    .foregroundStyle(cart.isCorrection ? .red : .primary)
+                Image(systemName: "chevron.up")
+                    .font(.footnote.bold())
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(.background)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+
+    // MARK: - Shared pieces
+
+    private var productGrid: some View {
+        ProductGridView(category: selectedCategory) { product in
+            cart.add(product)
+            showingLastOrder = false
+        }
+    }
+
+    private func lastOrderContent(onShowLinkedOrder: @escaping (Order) -> Void) -> some View {
+        Group {
+            if let order = lastOrder {
+                LastOrderPanelView(order: order, onShowLinkedOrder: onShowLinkedOrder)
+            } else {
+                ContentUnavailableView(
+                    "No orders yet",
+                    systemImage: "checklist",
+                    description: Text("Charged orders appear here so you can serve them.")
+                )
             }
         }
     }
