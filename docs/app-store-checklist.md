@@ -25,7 +25,7 @@ App Store Connect (manual steps) before the app can go to Apple review.
 
    > **Privacy policy — Point of Sale**
    > This app stores all data (products, orders, session reports, organization
-   > details) locally on your iPad. No data is collected by, or transmitted to,
+   > details) locally on your device. No data is collected by, or transmitted to,
    > the developer or any third party. No analytics, tracking, or advertising
    > frameworks are included. Session reports leave the device only when you
    > explicitly share or email them, using the recipient you configured.
@@ -33,9 +33,10 @@ App Store Connect (manual steps) before the app can go to Apple review.
 
 3. **App Privacy questionnaire**: answer "Data Not Collected".
 4. **Support URL** (can be the same page as the privacy policy).
-5. **Screenshots**: iPad 13" (2064×2752 or 2752×2064) required; take them in
-   landscape with realistic demo data. The simulator flow used for testing
-   works fine for this.
+5. **Screenshots**: the app now targets iPhone and iPad, so both sets are
+   required: iPhone 6.9" (1320×2868 or 2868×1320) and iPad 13" (2064×2752 or
+   2752×2064, landscape). Use realistic demo data; the simulator flow used
+   for testing works fine for this.
 6. **Export compliance**: already answered by the Info.plist key; if asked,
    the app uses no encryption beyond Apple's OS encryption.
 7. **App Review notes** (important — the app launches empty):
