@@ -69,8 +69,7 @@ struct CorrectionChargeSheet: View {
                         linkedOrderID = order.persistentModelID
                     } label: {
                         linkRow(
-                            title: order.createdAt.formatted(date: .omitted, time: .shortened)
-                                + " · " + order.total.currencyString,
+                            title: linkTitle(order),
                             subtitle: itemSummary(order),
                             isSelected: linkedOrderID == order.persistentModelID
                         )
@@ -81,6 +80,12 @@ struct CorrectionChargeSheet: View {
         } header: {
             Text("Correct a previous order (optional)")
         }
+    }
+
+    /// Row title like "#3 · 14:30 · €12,50".
+    private func linkTitle(_ order: Order) -> String {
+        Order.ticketLabel(number: order.sequenceNumber, time: order.createdAt)
+            + " · " + order.total.currencyString
     }
 
     private func linkRow(title: String, subtitle: String?, isSelected: Bool) -> some View {

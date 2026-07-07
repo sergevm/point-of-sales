@@ -84,6 +84,13 @@ final class SaleSession {
         orders.sorted { $0.createdAt > $1.createdAt }
     }
 
+    /// The next free per-session ticket number. Derived from the highest
+    /// number handed out so far (not the order count), so a number is never
+    /// reused: voided tickets keep theirs and stay on record.
+    var nextTicketNumber: Int {
+        (orders.map(\.sequenceNumber).max() ?? 0) + 1
+    }
+
     /// A sensible default name when the user doesn't provide one: today's date
     /// as `YY-MM-dd`, suffixed with `(session x)` for the 2nd and later sessions
     /// of the same day.

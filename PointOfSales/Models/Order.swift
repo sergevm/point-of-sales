@@ -4,6 +4,12 @@ import SwiftData
 /// A single charged ticket: one or more line items recorded together.
 @Model
 final class Order {
+    /// Per-session ticket number (1, 2, 3… within the session), assigned at
+    /// charge time. Never reused, so voided tickets keep their number and the
+    /// series stays unbroken for the audit trail. `0` for orders recorded
+    /// before numbering existed.
+    var sequenceNumber: Int = 0
+
     var createdAt: Date
 
     /// Total charged, snapshotted at charge time so later price/product edits
@@ -47,6 +53,7 @@ final class Order {
     var items: [OrderItem] = []
 
     init(
+        sequenceNumber: Int = 0,
         createdAt: Date = .now,
         total: Decimal = .zero,
         paymentMethod: PaymentMethod = .cash,
@@ -56,6 +63,7 @@ final class Order {
         correctedOrder: Order? = nil,
         session: SaleSession? = nil
     ) {
+        self.sequenceNumber = sequenceNumber
         self.createdAt = createdAt
         self.total = total
         self.paymentMethodRaw = paymentMethod.rawValue
@@ -72,6 +80,33 @@ final class Order {
     }
 
     var isVoided: Bool { voidedAt != nil }
+
+    /// False for orders recorded before per-session numbering existed.
+    var hasTicketNumber: Bool { sequenceNumber > 0 }
+
+    /// "#3" — or nil when the order predates per-session numbering.
+    var numberLabel: String? { Order.numberLabel(sequenceNumber) }
+
+    /// Compact reference used wherever this ticket is shown or linked to,
+    /// e.g. "#3". Falls back to the charge time for orders recorded before
+    /// per-session numbering existed.
+    var referenceLabel: String {
+        numberLabel ?? createdAt.formatted(date: .omitted, time: .shortened)
+    }
+
+    /// "#3" — or nil for the `0` marker of orders that predate numbering.
+    /// The static variants exist so report snapshots can format a ticket
+    /// without holding the model object.
+    static func numberLabel(_ number: Int) -> String? {
+        number > 0 ? "#\(number)" : nil
+    }
+
+    /// Fuller display label, "#3 · 14:30" (just the time for legacy orders).
+    static func ticketLabel(number: Int, time: Date) -> String {
+        let timeText = time.formatted(date: .omitted, time: .shortened)
+        guard let numberText = numberLabel(number) else { return timeText }
+        return "\(numberText) · \(timeText)"
+    }
 
     /// True when at least one credit ticket has been linked back to this order.
     var hasCorrection: Bool { !corrections.isEmpty }

@@ -46,7 +46,7 @@ struct LastOrderPanelView: View {
                 onShowLinkedOrder(original)
             } label: {
                 Label(
-                    "Corrects the \(original.createdAt.formatted(date: .omitted, time: .shortened)) order",
+                    "Corrects order \(original.referenceLabel)",
                     systemImage: "arrow.up.left"
                 )
                 .font(.subheadline)
@@ -56,13 +56,13 @@ struct LastOrderPanelView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.tint)
-        } else if order.hasCorrection, let credit = order.corrections.sorted(by: { $0.createdAt > $1.createdAt }).first {
+        } else if order.hasCorrection, let credit = order.corrections.max(by: { $0.createdAt < $1.createdAt }) {
             Divider()
             Button {
                 onShowLinkedOrder(credit)
             } label: {
                 Label(
-                    "Corrected by a credit ticket — view",
+                    "Corrected by credit \(credit.referenceLabel) — view",
                     systemImage: "arrow.down.right"
                 )
                 .font(.subheadline)
@@ -85,7 +85,10 @@ struct LastOrderPanelView: View {
                 Text(order.isCorrection ? "Credit ticket" : "Last order")
                     .font(.headline)
                     .foregroundStyle(order.isCorrection ? .red : .primary)
-                Text(order.createdAt.formatted(date: .omitted, time: .shortened))
+                let time = order.createdAt.formatted(date: .omitted, time: .shortened)
+                (order.hasTicketNumber
+                    ? Text("Ticket #\(order.sequenceNumber) · \(time)")
+                    : Text(time))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

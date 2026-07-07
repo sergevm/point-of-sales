@@ -2,12 +2,12 @@
   "sourceLanguage": "en",
   "strings": {
     "": {},
-    " — for the %@ order": {
+    " — for order %@": {
       "localizations": {
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": " — voor de bestelling van %@"
+            "value": " — voor bestelling %@"
           }
         }
       }
@@ -536,22 +536,22 @@
         }
       }
     },
-    "Corrected by a credit ticket — view": {
+    "Corrected by credit %@": {
       "localizations": {
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gecorrigeerd door een creditticket — bekijk"
+            "value": "Gecorrigeerd door credit %@"
           }
         }
       }
     },
-    "Corrected by the %@ credit": {
+    "Corrected by credit %@ — view": {
       "localizations": {
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gecorrigeerd door de credit van %@"
+            "value": "Gecorrigeerd door credit %@ — bekijk"
           }
         }
       }
@@ -586,12 +586,12 @@
         }
       }
     },
-    "Corrects the %@ order": {
+    "Corrects order %@": {
       "localizations": {
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Corrigeert de bestelling van %@"
+            "value": "Corrigeert bestelling %@"
           }
         }
       }
@@ -1582,6 +1582,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dit lijkt geen geldig e-mailadres."
+          }
+        }
+      }
+    },
+    "Ticket #%lld · %@": {
+      "localizations": {
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticket #%lld · %@"
           }
         }
       }
