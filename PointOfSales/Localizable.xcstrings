@@ -472,6 +472,16 @@
         }
       }
     },
+    "Clean up old data" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oude gegevens opruimen"
+          }
+        }
+      }
+    },
     "Clear" : {
       "localizations" : {
         "nl" : {
@@ -742,6 +752,46 @@
         }
       }
     },
+    "Delete %lld sessions?" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete 1 session?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld sessions?"
+                }
+              }
+            }
+          }
+        },
+        "nl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "1 sessie verwijderen?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sessies verwijderen?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Delete category" : {
       "localizations" : {
         "nl" : {
@@ -752,12 +802,92 @@
         }
       }
     },
+    "Delete old sessions" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder oude sessies"
+          }
+        }
+      }
+    },
+    "Delete permanently" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definitief verwijderen"
+          }
+        }
+      }
+    },
     "Delete product" : {
       "localizations" : {
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verwijder product"
+          }
+        }
+      }
+    },
+    "Deleted %lld sessions." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deleted 1 session."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deleted %lld sessions."
+                }
+              }
+            }
+          }
+        },
+        "nl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "1 sessie verwijderd."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sessies verwijderd."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Deleted sessions and their orders disappear permanently from the history and reports. This cannot be undone. An open session is never deleted." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijderde sessies en hun bestellingen verdwijnen definitief uit de historiek en de rapporten. Dit kan niet ongedaan gemaakt worden. Een open sessie wordt nooit verwijderd."
+          }
+        }
+      }
+    },
+    "Deletion failed" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijderen mislukt"
           }
         }
       }
@@ -1032,6 +1162,16 @@
         }
       }
     },
+    "No closed sessions are older than this." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen enkele afgesloten sessie is ouder dan dit."
+          }
+        }
+      }
+    },
     "No closed sessions yet." : {
       "localizations" : {
         "nl" : {
@@ -1132,6 +1272,16 @@
         }
       }
     },
+    "Nothing is deleted automatically. Below you can permanently delete every session that was closed longer ago than this." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er wordt nooit automatisch iets verwijderd. Hieronder kan je alle sessies definitief verwijderen die langer geleden dan dit afgesloten werden."
+          }
+        }
+      }
+    },
     "of which cash rounding" : {
       "localizations" : {
         "nl" : {
@@ -1148,6 +1298,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "Old data" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oude gegevens"
+          }
+        }
+      }
+    },
+    "Old sessions deleted" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oude sessies verwijderd"
+          }
+        }
+      }
+    },
+    "Older than %lld months" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Older than 1 month"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Older than %lld months"
+                }
+              }
+            }
+          }
+        },
+        "nl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ouder dan 1 maand"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ouder dan %lld maanden"
+                }
+              }
+            }
           }
         }
       }
@@ -1228,6 +1438,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eerdere verkopen blijven bewaard. Om een product te verbergen zonder het te verwijderen, zet je “Beschikbaar op de kassa” uit."
+          }
+        }
+      }
+    },
+    "Period" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periode"
           }
         }
       }
@@ -1392,6 +1612,16 @@
         }
       }
     },
+    "Retention period" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaartermijn"
+          }
+        }
+      }
+    },
     "Revenue" : {
       "localizations" : {
         "nl" : {
@@ -1512,6 +1742,16 @@
         }
       }
     },
+    "Sessions" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessies"
+          }
+        }
+      }
+    },
     "Share report" : {
       "localizations" : {
         "nl" : {
@@ -1592,6 +1832,16 @@
         }
       }
     },
+    "The data could not be deleted. No changes were made." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De gegevens konden niet verwijderd worden. Er is niets gewijzigd."
+          }
+        }
+      }
+    },
     "The order stays on record but no longer counts towards receipts." : {
       "localizations" : {
         "nl" : {
@@ -1628,6 +1878,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Het ticket bleef behouden. Probeer opnieuw af te rekenen."
+          }
+        }
+      }
+    },
+    "These sessions and every order recorded in them will be gone forever. This cannot be undone." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze sessies en alle bestellingen die erin geregistreerd werden, verdwijnen voorgoed. Dit kan niet ongedaan gemaakt worden."
           }
         }
       }
@@ -1678,6 +1938,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tip: voeg eerst categorieën en producten toe via Instellingen."
+          }
+        }
+      }
+    },
+    "To be deleted" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wordt verwijderd"
           }
         }
       }

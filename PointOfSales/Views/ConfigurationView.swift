@@ -40,6 +40,11 @@ struct ConfigurationView: View {
                     } label: {
                         Label("Organization & bookkeeper", systemImage: "building.2")
                     }
+                    NavigationLink {
+                        DataCleanupView()
+                    } label: {
+                        Label("Clean up old data", systemImage: "clock.arrow.circlepath")
+                    }
                 }
             }
             .navigationTitle("Configuration")
