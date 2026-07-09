@@ -45,5 +45,10 @@ xcrun simctl io <udid> screenshot shot.png
 ```
 
 iPad screenshots come out of `simctl` portrait-oriented; rotate them with
-`sips -r 90 shot.png`. The web-sized copies used by the support site live in
-`site/screenshots/`.
+`sips -r 90 shot.png`. `simctl` writes PNGs **with an alpha channel, which App
+Store Connect rejects** — flatten to RGB before uploading (Pillow:
+`Image.merge('RGB', im.convert('RGBA').split()[:3])`; the checked-in files are
+already flattened). Device frames/bezels are optional; plain full-screen
+captures like these are accepted as long as they show the real app in use
+(App Review guideline 2.3.3). The web-sized copies used by the support site
+live in `site/screenshots/`.
