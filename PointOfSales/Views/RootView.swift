@@ -71,6 +71,12 @@ struct RootView: View {
                 SessionReportScreen(session: session)
             }
         }
+        .task {
+            #if DEBUG
+            DemoData.seedIfRequested(in: context)
+            await DemoData.forceLandscapeIfRequested()
+            #endif
+        }
     }
 
     /// After a session is closed its sales sheet dismisses itself; the report
