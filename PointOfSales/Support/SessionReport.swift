@@ -108,7 +108,7 @@ struct SessionReport {
 
         var lines: [String: ProductLine] = [:]
         for item in valid.flatMap(\.items) {
-            let categoryName = item.product?.category?.name ?? "Other"
+            let categoryName = item.product?.category?.name ?? String(localized: "Other")
             let key = "\(categoryName)|\(item.productName)"
             let existing = lines[key]
             lines[key] = ProductLine(
