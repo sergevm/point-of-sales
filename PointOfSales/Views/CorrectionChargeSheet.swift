@@ -60,7 +60,7 @@ struct CorrectionChargeSheet: View {
                 Button {
                     linkedOrderID = nil
                 } label: {
-                    linkRow(title: "Don't link", subtitle: nil, isSelected: linkedOrderID == nil)
+                    linkRow(title: String(localized: "Don't link"), subtitle: nil, isSelected: linkedOrderID == nil)
                 }
                 .buttonStyle(.plain)
 

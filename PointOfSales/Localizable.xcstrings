@@ -763,7 +763,6 @@
       }
     },
     "Don't link" : {
-      "extractionState" : "stale",
       "localizations" : {
         "nl" : {
           "stringUnit" : {
@@ -1189,6 +1188,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organisatie & boekhouder"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overige"
           }
         }
       }
