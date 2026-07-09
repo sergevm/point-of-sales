@@ -6,7 +6,20 @@ struct ProductGridView: View {
     let category: ProductCategory?
     let onSelect: (Product) -> Void
 
-    private let columns = [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    /// Compact width (iPhone) gets smaller, denser buttons; regular width (iPad)
+    /// keeps the larger touch targets.
+    private var isCompact: Bool { horizontalSizeClass == .compact }
+
+    private var columns: [GridItem] {
+        isCompact
+            ? [GridItem(.adaptive(minimum: 104, maximum: 160), spacing: 10)]
+            : [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
+    }
+
+    private var gridSpacing: CGFloat { isCompact ? 10 : 12 }
+    private var buttonMinHeight: CGFloat { isCompact ? 60 : 90 }
 
     private var products: [Product] {
         category?.activeProducts ?? []
@@ -29,37 +42,37 @@ struct ProductGridView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 12) {
+                LazyVGrid(columns: columns, spacing: gridSpacing) {
                     ForEach(products) { product in
                         Button {
                             onSelect(product)
                         } label: {
-                            VStack(spacing: 6) {
+                            VStack(spacing: isCompact ? 4 : 6) {
                                 Text(product.name)
-                                    .font(.headline)
+                                    .font(isCompact ? .subheadline.weight(.semibold) : .headline)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(2)
                                 Text(product.price.currencyString)
-                                    .font(.subheadline)
+                                    .font(isCompact ? .footnote : .subheadline)
                                     .foregroundStyle(.white.opacity(0.85))
                             }
                             .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, minHeight: 90)
-                            .padding(8)
+                            .frame(maxWidth: .infinity, minHeight: buttonMinHeight)
+                            .padding(isCompact ? 6 : 8)
                             .background(
                                 LinearGradient(
                                     colors: [tint, tint.opacity(0.85)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 ),
-                                in: RoundedRectangle(cornerRadius: 14)
+                                in: RoundedRectangle(cornerRadius: isCompact ? 12 : 14)
                             )
                         }
                         .buttonStyle(.depth(tint.opacity(0.5)))
                         .accessibilityLabel(Text("Add \(product.name), \(product.price.currencyString)"))
                     }
                 }
-                .padding(12)
+                .padding(gridSpacing)
             }
         }
     }
