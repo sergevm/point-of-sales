@@ -182,12 +182,25 @@ struct RegisterView: View {
     }
 
     private var categoryBar: some View {
-        FlowLayout(spacing: 12) {
+        Group {
             if categories.isEmpty {
+                // Outside the FlowLayout, which sizes children to their ideal
+                // width for chip layout and would keep this on a single line.
                 Text("No categories yet — add some in Configure.")
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
+            } else {
+                categoryChips
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+        }
+        .padding(12)
+    }
+
+    private var categoryChips: some View {
+        FlowLayout(spacing: 12) {
             ForEach(categories) { category in
                 let color = Color(hex: category.colorHex) ?? .accentColor
                 let isSelected = category.persistentModelID == selectedCategory?.persistentModelID
@@ -208,7 +221,5 @@ struct RegisterView: View {
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
     }
 }
