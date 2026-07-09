@@ -30,12 +30,17 @@ struct RootView: View {
         NavigationStack {
             Group {
                 if let session = activeSession {
-                    RegisterView(session: session, cart: cart) { order in
-                        salesFocusOrderID = order.persistentModelID
-                        showingSales = true
-                    }
+                    RegisterView(
+                        session: session,
+                        cart: cart,
+                        onShowOrderInSales: { order in
+                            salesFocusOrderID = order.persistentModelID
+                            showingSales = true
+                        },
+                        onOpenConfiguration: { showingConfiguration = true }
+                    )
                 } else {
-                    StartSessionView()
+                    StartSessionView(onOpenConfiguration: { showingConfiguration = true })
                 }
             }
             .navigationTitle("")
@@ -94,7 +99,7 @@ struct RootView: View {
                     .fixedSize(horizontal: true, vertical: false)
                 }
             } else {
-                Text("Point of Sale")
+                Text("Point of Sales")
                     .font(.headline)
                     .fixedSize(horizontal: true, vertical: false)
             }

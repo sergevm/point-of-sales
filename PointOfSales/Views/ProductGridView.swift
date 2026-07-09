@@ -6,6 +6,10 @@ struct ProductGridView: View {
     let category: ProductCategory?
     let onSelect: (Product) -> Void
 
+    /// Opens the configuration sheet from the empty state, so a first-time
+    /// user doesn't have to find the toolbar icon.
+    var onOpenConfiguration: () -> Void = {}
+
     private let columns = [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)]
 
     private var products: [Product] {
@@ -23,8 +27,10 @@ struct ProductGridView: View {
                 Label("No products", systemImage: "tray")
             } description: {
                 Text(category == nil
-                     ? "Add a category and products in Configure."
+                     ? "Add a category and products to start selling."
                      : "This category has no active products.")
+            } actions: {
+                Button("Open Configure", action: onOpenConfiguration)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {

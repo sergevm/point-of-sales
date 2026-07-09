@@ -14,6 +14,10 @@ struct RegisterView: View {
     /// session sales list, for navigating between corrections and their originals.
     var onShowOrderInSales: (Order) -> Void = { _ in }
 
+    /// Called to open the configuration sheet, so empty states can offer the
+    /// set-up step directly instead of describing the toolbar icon.
+    var onOpenConfiguration: () -> Void = {}
+
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
@@ -161,10 +165,14 @@ struct RegisterView: View {
     // MARK: - Shared pieces
 
     private var productGrid: some View {
-        ProductGridView(category: selectedCategory) { product in
-            cart.add(product)
-            showingLastOrder = false
-        }
+        ProductGridView(
+            category: selectedCategory,
+            onSelect: { product in
+                cart.add(product)
+                showingLastOrder = false
+            },
+            onOpenConfiguration: onOpenConfiguration
+        )
     }
 
     private func lastOrderContent(onShowLinkedOrder: @escaping (Order) -> Void) -> some View {
