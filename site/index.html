@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Point of Sale — Support</title>
-  <meta name="description" content="Support and privacy information for the Point of Sale app for iPhone and iPad.">
+  <title>Point of Sales — Support</title>
+  <meta name="description" content="Support and privacy information for the Point of Sales app for iPhone and iPad.">
   <style>
     :root {
       --accent: #0a7d4f;
@@ -46,19 +46,32 @@
       text-align: center; color: var(--muted);
       font-size: 0.85rem; margin-top: 2.5rem;
     }
+    figure { margin: 1rem 0 0; }
+    figure img {
+      width: 100%; height: auto; display: block;
+      border: 1px solid #e5e5ea; border-radius: 10px;
+    }
+    figcaption {
+      color: var(--muted); font-size: 0.85rem;
+      margin-top: 0.4rem; text-align: center;
+    }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 480px) { .pair { grid-template-columns: 1fr; } }
+    h3 { font-size: 1.05rem; margin-top: 1.5rem; }
+    h3:first-of-type { margin-top: 0.75rem; }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <img class="app-icon" src="app-icon.png" alt="Point of Sale app icon" width="96" height="96">
-      <h1>Point of Sale</h1>
+      <img class="app-icon" src="app-icon.png" alt="Point of Sales app icon" width="96" height="96">
+      <h1>Point of Sales</h1>
       <p class="tagline">A simple cash register for small club bars, on iPhone and iPad.</p>
     </header>
 
     <section>
       <h2>About</h2>
-      <p>Point of Sale is a lightweight point-of-sale app for small clubs and
+      <p>Point of Sales is a lightweight point-of-sale app for small clubs and
       non-profits where orders are taken at the bar on a single device. Open a
       session, tap products to build a ticket, charge, and close the session at
       the end of the night to get a numbered sales report you can share as PDF
@@ -69,6 +82,83 @@
         <li><strong>Categories &amp; products</strong> — configured in-app, with a colour per category.</li>
         <li><strong>Session reports</strong> — numbered end-of-session reports, exportable as PDF or CSV.</li>
       </ul>
+    </section>
+
+    <section>
+      <h2>Features</h2>
+
+      <h3>The register</h3>
+      <p>Colour-coded categories, big tappable product buttons, and the running
+      ticket always in view. On iPhone the ticket lives in a bottom bar that
+      opens into a full cart.</p>
+      <figure>
+        <img src="screenshots/ipad-01-register.png" alt="iPad register with category chips, product grid and the current ticket" loading="lazy">
+        <figcaption>The register on iPad: products on the left, the current ticket on the right.</figcaption>
+      </figure>
+      <div class="pair">
+        <figure>
+          <img src="screenshots/iphone-01-register.png" alt="iPhone register with product grid and ticket bar" loading="lazy">
+          <figcaption>The same register on iPhone.</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/iphone-02-cart.png" alt="iPhone cart with quantity steppers and totals" loading="lazy">
+          <figcaption>The ticket, with quantity steppers per line.</figcaption>
+        </figure>
+      </div>
+
+      <h3>Charging an order</h3>
+      <p>Charge with one tap per payment method — cash, card, or Payconiq. Cash
+      totals are rounded to 5 cents the way Belgian law requires, and the
+      announced amount is right on the button.</p>
+      <figure>
+        <img src="screenshots/iphone-03-payment.png" alt="Payment dialog with cash, card and Payconiq options showing the amount due" loading="lazy">
+        <figcaption>Every payment option shows the exact amount to ask for.</figcaption>
+      </figure>
+
+      <h3>Serving what was just sold</h3>
+      <p>After charging, the order stays visible in a glanceable panel so you
+      can prepare and serve it while the register is free for the next
+      client.</p>
+      <figure>
+        <img src="screenshots/ipad-03-last-order.png" alt="Last order panel next to the register showing the items to serve" loading="lazy">
+        <figcaption>The last order stays on screen while you serve it.</figcaption>
+      </figure>
+
+      <h3>A full audit trail</h3>
+      <p>Every ticket gets a number. Mistakes are never deleted: orders can be
+      voided with a reason, and refunds are recorded as credit tickets linked
+      to the original order.</p>
+      <figure>
+        <img src="screenshots/ipad-04-sales.png" alt="Session sales list with numbered orders and payment method icons" loading="lazy">
+        <figcaption>The session's sales list: numbered tickets, items, and payment methods.</figcaption>
+      </figure>
+
+      <h3>Reports for the bookkeeper</h3>
+      <p>Closing a session produces a numbered report with receipts per payment
+      method, sales and margin per product, credits, and voided orders — ready
+      to email to your bookkeeper as PDF and CSV. The daily receipts view sums
+      everything per calendar day with the cash/electronic split for the
+      daily receipts book.</p>
+      <div class="pair">
+        <figure>
+          <img src="screenshots/iphone-07-report.png" alt="Numbered session report with organization header, totals and per-product sales" loading="lazy">
+          <figcaption>The end-of-session report.</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/iphone-06-daily.png" alt="Daily receipts overview with cash and electronic totals per day" loading="lazy">
+          <figcaption>Daily receipts with the cash/electronic split.</figcaption>
+        </figure>
+      </div>
+
+      <h3>Simple to set up</h3>
+      <p>Categories and products are managed in the app: give each category a
+      colour, set prices and optional cost prices for net-revenue reporting,
+      and hide products from the register without losing their history. The
+      app is available in English and Dutch.</p>
+      <figure>
+        <img src="screenshots/ipad-07-configure.png" alt="Configuration screen listing categories with colours and product counts" loading="lazy">
+        <figcaption>Categories with their colours and product counts.</figcaption>
+      </figure>
     </section>
 
     <section>
