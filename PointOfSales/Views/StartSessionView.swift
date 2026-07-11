@@ -3,6 +3,10 @@ import SwiftData
 
 /// Shown when no session is open. Lets the user name and start a new session.
 struct StartSessionView: View {
+    /// Called to open the configuration sheet, so the no-products hint can take
+    /// the user straight to set-up instead of describing the toolbar icon.
+    var onOpenConfiguration: () -> Void = {}
+
     @Environment(\.modelContext) private var context
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
@@ -38,10 +42,11 @@ struct StartSessionView: View {
             .buttonStyle(.prominentDepth(tint: .accentColor))
 
             if !hasProducts {
-                Text("Tip: add categories and products from Configure first.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 8)
+                Button(action: onOpenConfiguration) {
+                    Label("Add categories and products first", systemImage: "slider.horizontal.3")
+                        .font(.callout)
+                }
+                .padding(.top, 8)
             }
         }
         .padding(40)

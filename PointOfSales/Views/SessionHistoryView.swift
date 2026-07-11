@@ -27,7 +27,7 @@ struct SessionHistoryView: View {
 
                 Section("Closed sessions") {
                     if sessions.isEmpty {
-                        Text("No closed sessions yet.")
+                        Text("No closed sessions yet. When you end a session, it appears here with its report.")
                             .foregroundStyle(.secondary)
                     }
                     ForEach(sessions) { session in
