@@ -662,6 +662,26 @@
         }
       }
     },
+    "Create demo setup" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demovoorbeeld maken"
+          }
+        }
+      }
+    },
+    "Create demo setup?" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demovoorbeeld maken?"
+          }
+        }
+      }
+    },
     "Credit" : {
       "localizations" : {
         "nl" : {
@@ -768,6 +788,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verwijder product"
+          }
+        }
+      }
+    },
+    "Demo setup could not be created" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demovoorbeeld kon niet worden aangemaakt"
           }
         }
       }
@@ -1168,6 +1198,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instellingen openen"
+          }
+        }
+      }
+    },
+    "Or try it with a demo setup" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Of probeer het met een demovoorbeeld"
           }
         }
       }
@@ -1650,6 +1690,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Het ticket bleef behouden. Probeer opnieuw af te rekenen."
+          }
+        }
+      }
+    },
+    "This adds %lld sample categories with %lld products. You can edit or delete them at any time." : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dit voegt %lld voorbeeldcategorieën met %lld producten toe. Je kunt ze altijd bewerken of verwijderen."
           }
         }
       }

@@ -7,10 +7,19 @@ struct ConfigurationView: View {
     @Environment(\.dismiss) private var dismiss
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
+    @Query private var products: [Product]
 
     @State private var editingCategory: ProductCategory?
     @State private var creatingCategory = false
     @State private var pendingDeletion: IndexSet?
+    @State private var confirmingDemoSetup = false
+    @State private var demoSetupFailed = false
+
+    /// Nothing has been set up yet: no categories *and* no products (products
+    /// can exist without a category). Only then do we offer the demo setup.
+    private var isCatalogEmpty: Bool {
+        categories.isEmpty && products.isEmpty
+    }
 
     var body: some View {
         NavigationStack {
@@ -22,6 +31,14 @@ struct ConfigurationView: View {
                             systemImage: "square.grid.2x2",
                             description: Text("Add a category to start building your menu.")
                         )
+                        if isCatalogEmpty {
+                            Button {
+                                confirmingDemoSetup = true
+                            } label: {
+                                Label("Or try it with a demo setup", systemImage: "wand.and.stars")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                        }
                     }
                     ForEach(categories) { category in
                         NavigationLink {
@@ -78,6 +95,29 @@ struct ConfigurationView: View {
             } message: {
                 Text("Its products are kept and become unassigned. You can re-assign them from any category's product list.")
             }
+            .confirmationDialog(
+                "Create demo setup?",
+                isPresented: $confirmingDemoSetup,
+                titleVisibility: .visible
+            ) {
+                Button("Create demo setup", action: createDemoSetup)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This adds \(DemoCatalog.categoryCount) sample categories with \(DemoCatalog.productCount) products. You can edit or delete them at any time.")
+            }
+            .alert("Demo setup could not be created", isPresented: $demoSetupFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Please try again.")
+            }
+        }
+    }
+
+    private func createDemoSetup() {
+        do {
+            try DemoCatalog.createDemoSetup(in: context)
+        } catch {
+            demoSetupFailed = true
         }
     }
 
