@@ -23,7 +23,7 @@ enum DemoData {
         settings.enterpriseNumber = "0745.678.986"
         settings.bookkeeperEmail = "mail@vrolijkevrienden.be"
 
-        let products = seedCatalog(in: context)
+        let products = DemoCatalog.seedCatalog(in: context)
         seedClosedSession(in: context, products: products)
         seedOpenSession(in: context, products: products)
         try? context.save()
@@ -42,84 +42,6 @@ enum DemoData {
         }
     }
 
-    // MARK: - Catalog
-
-    private static func eur(_ cents: Int) -> Decimal {
-        Decimal(cents) / 100
-    }
-
-    /// Demo names follow the app language so screenshots read naturally in
-    /// every store localization.
-    private static var isDutch: Bool {
-        Bundle.main.preferredLocalizations.first?.hasPrefix("nl") == true
-    }
-
-    /// Picks the English or Dutch variant of a demo name.
-    private static func L(_ en: String, _ nl: String) -> String {
-        isDutch ? nl : en
-    }
-
-    /// (name, price in cents, cost in cents) per category.
-    private static var catalog: [(category: String, colorHex: String, products: [(String, Int, Int)])] {
-        [
-            (L("Cold drinks", "Koude dranken"), "1E88E5", [
-                ("Coca-Cola", 220, 75),
-                ("Cola Zero", 220, 75),
-                ("Sprite", 220, 75),
-                ("Fanta", 220, 75),
-                (L("Water", "Water"), 180, 45),
-                (L("Sparkling water", "Spuitwater"), 180, 45),
-                ("Tonic", 250, 90),
-                (L("Apple juice", "Appelsap"), 220, 80),
-                (L("Orange juice", "Sinaasappelsap"), 220, 80),
-                (L("Chocolate milk", "Chocomelk"), 220, 85),
-            ]),
-            (L("Hot drinks", "Warme dranken"), "FB8C00", [
-                (L("Coffee", "Koffie"), 200, 40),
-                (L("Decaf", "Deca"), 200, 40),
-                (L("Tea", "Thee"), 200, 35),
-                (L("Hot chocolate", "Warme chocomelk"), 250, 90),
-                (L("Rosehip tea", "Rozenbottelthee"), 220, 40),
-                (L("Curry soup", "Currysoep"), 350, 120),
-                (L("Tomato soup", "Tomatensoep"), 350, 110),
-            ]),
-            ("Snacks", "FDD835", [
-                (L("Salted crisps", "Chips zout"), 150, 60),
-                (L("Paprika crisps", "Chips paprika"), 150, 60),
-                (L("Dried sausage", "Droge worst"), 350, 180),
-            ]),
-            (L("Wine", "Wijn"), "8E24AA", [
-                (L("Red wine", "Rode wijn"), 350, 130),
-                (L("White wine", "Witte wijn"), 350, 130),
-                (L("Port", "Porto"), 400, 150),
-            ]),
-        ]
-    }
-
-    private static func seedCatalog(in context: ModelContext) -> [String: Product] {
-        var byName: [String: Product] = [:]
-        for (categoryIndex, entry) in catalog.enumerated() {
-            let category = ProductCategory(
-                name: entry.category,
-                colorHex: entry.colorHex,
-                sortOrder: categoryIndex
-            )
-            context.insert(category)
-            for (productIndex, item) in entry.products.enumerated() {
-                let product = Product(
-                    name: item.0,
-                    price: eur(item.1),
-                    sortOrder: productIndex,
-                    category: category
-                )
-                product.costPrice = eur(item.2)
-                context.insert(product)
-                byName[item.0] = product
-            }
-        }
-        return byName
-    }
-
     // MARK: - Sessions
 
     private static func seedClosedSession(in context: ModelContext, products: [String: Product]) {
@@ -128,7 +50,7 @@ enum DemoData {
         let start = calendar.date(bySettingHour: 19, minute: 0, second: 0, of: yesterday) ?? yesterday
 
         let session = SaleSession(
-            name: L("Friday bar", "Vrijdagbar"),
+            name: DemoCatalog.L("Friday bar", "Vrijdagbar"),
             sequenceNumber: 1,
             startedAt: start
         )
@@ -139,55 +61,55 @@ enum DemoData {
 
         let doubleEntry = addOrder(
             to: session, number: 1, at: at(12), method: .cash,
-            lines: [(L("Port", "Porto"), 2)], products: products, in: context
+            lines: [(DemoCatalog.L("Port", "Porto"), 2)], products: products, in: context
         )
         doubleEntry.voidedAt = at(14)
-        doubleEntry.voidReason = L("Entered twice", "Dubbel ingegeven")
+        doubleEntry.voidReason = DemoCatalog.L("Entered twice", "Dubbel ingegeven")
 
         addOrder(to: session, number: 2, at: at(15), method: .cash,
-                 lines: [(L("Port", "Porto"), 2)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Port", "Porto"), 2)], products: products, in: context)
         addOrder(to: session, number: 3, at: at(21), method: .cash,
-                 lines: [(L("Coffee", "Koffie"), 2), (L("Apple juice", "Appelsap"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Coffee", "Koffie"), 2), (DemoCatalog.L("Apple juice", "Appelsap"), 1)], products: products, in: context)
         addOrder(to: session, number: 4, at: at(29), method: .payconiq,
                  lines: [("Coca-Cola", 3), ("Water", 1)], products: products, in: context)
         addOrder(to: session, number: 5, at: at(38), method: .cash,
-                 lines: [(L("Red wine", "Rode wijn"), 2), (L("Salted crisps", "Chips zout"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Red wine", "Rode wijn"), 2), (DemoCatalog.L("Salted crisps", "Chips zout"), 1)], products: products, in: context)
         addOrder(to: session, number: 6, at: at(52), method: .card,
-                 lines: [(L("Tomato soup", "Tomatensoep"), 2), (L("Sparkling water", "Spuitwater"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Tomato soup", "Tomatensoep"), 2), (DemoCatalog.L("Sparkling water", "Spuitwater"), 1)], products: products, in: context)
         let fantaOrder = addOrder(
             to: session, number: 7, at: at(66), method: .cash,
-            lines: [("Fanta", 1), ("Sprite", 1), (L("Paprika crisps", "Chips paprika"), 2)], products: products, in: context
+            lines: [("Fanta", 1), ("Sprite", 1), (DemoCatalog.L("Paprika crisps", "Chips paprika"), 2)], products: products, in: context
         )
         addOrder(to: session, number: 8, at: at(83), method: .payconiq,
-                 lines: [(L("White wine", "Witte wijn"), 3), (L("Dried sausage", "Droge worst"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("White wine", "Witte wijn"), 3), (DemoCatalog.L("Dried sausage", "Droge worst"), 1)], products: products, in: context)
         addOrder(to: session, number: 9, at: at(101), method: .cash,
-                 lines: [(L("Chocolate milk", "Chocomelk"), 2), (L("Hot chocolate", "Warme chocomelk"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Chocolate milk", "Chocomelk"), 2), (DemoCatalog.L("Hot chocolate", "Warme chocomelk"), 1)], products: products, in: context)
         addOrder(to: session, number: 10, at: at(124), method: .card,
-                 lines: [(L("Curry soup", "Currysoep"), 2), ("Cola Zero", 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Curry soup", "Currysoep"), 2), ("Cola Zero", 1)], products: products, in: context)
         addOrder(to: session, number: 11, at: at(149), method: .payconiq,
-                 lines: [("Tonic", 2), (L("Orange juice", "Sinaasappelsap"), 1)], products: products, in: context)
+                 lines: [("Tonic", 2), (DemoCatalog.L("Orange juice", "Sinaasappelsap"), 1)], products: products, in: context)
         addOrder(to: session, number: 12, at: at(178), method: .cash,
                  lines: [("Fanta", -1)], products: products, in: context,
-                 correcting: fantaOrder, reason: L("Wrong order", "Verkeerde bestelling"))
+                 correcting: fantaOrder, reason: DemoCatalog.L("Wrong order", "Verkeerde bestelling"))
         addOrder(to: session, number: 13, at: at(205), method: .cash,
-                 lines: [(L("Tea", "Thee"), 2), (L("Decaf", "Deca"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Tea", "Thee"), 2), (DemoCatalog.L("Decaf", "Deca"), 1)], products: products, in: context)
     }
 
     private static func seedOpenSession(in context: ModelContext, products: [String: Product]) {
         let start = Date.now.addingTimeInterval(-75 * 60)
         let session = SaleSession(
-            name: L("Saturday bar", "Zaterdagbar"),
+            name: DemoCatalog.L("Saturday bar", "Zaterdagbar"),
             sequenceNumber: 2,
             startedAt: start
         )
         context.insert(session)
 
         addOrder(to: session, number: 1, at: .now.addingTimeInterval(-58 * 60), method: .cash,
-                 lines: [("Coca-Cola", 2), (L("Salted crisps", "Chips zout"), 1)], products: products, in: context)
+                 lines: [("Coca-Cola", 2), (DemoCatalog.L("Salted crisps", "Chips zout"), 1)], products: products, in: context)
         addOrder(to: session, number: 2, at: .now.addingTimeInterval(-34 * 60), method: .payconiq,
-                 lines: [(L("Coffee", "Koffie"), 2)], products: products, in: context)
+                 lines: [(DemoCatalog.L("Coffee", "Koffie"), 2)], products: products, in: context)
         addOrder(to: session, number: 3, at: .now.addingTimeInterval(-11 * 60), method: .card,
-                 lines: [(L("White wine", "Witte wijn"), 2), (L("Dried sausage", "Droge worst"), 1)], products: products, in: context)
+                 lines: [(DemoCatalog.L("White wine", "Witte wijn"), 2), (DemoCatalog.L("Dried sausage", "Droge worst"), 1)], products: products, in: context)
     }
 
     /// Quantities are positive for sales; pass negative quantities together with
