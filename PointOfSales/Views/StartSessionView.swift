@@ -40,6 +40,7 @@ struct StartSessionView: View {
                     .padding(.vertical, 12)
             }
             .buttonStyle(.prominentDepth(tint: .accentColor))
+            .disabled(!hasProducts)
 
             if !hasProducts {
                 Button(action: onOpenConfiguration) {
