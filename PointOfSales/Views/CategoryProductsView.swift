@@ -43,6 +43,14 @@ struct CategoryProductsView: View {
             .onDelete { offsets in pendingDeletion = offsets }
             .onMove(perform: moveProducts)
 
+            // Kept with this category's products, above the unassigned section,
+            // so it stays clear which list it adds to.
+            Button {
+                creatingProduct = true
+            } label: {
+                Label("Add product", systemImage: "plus")
+            }
+
             if !unassignedProducts.isEmpty {
                 Section {
                     ForEach(unassignedProducts) { product in
@@ -59,13 +67,6 @@ struct CategoryProductsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { EditButton() }
-            ToolbarItem(placement: .bottomBar) {
-                Button {
-                    creatingProduct = true
-                } label: {
-                    Label("Add product", systemImage: "plus")
-                }
-            }
         }
         .sheet(isPresented: $creatingProduct) {
             ProductEditView(product: nil, category: category, nextSortOrder: products.count)

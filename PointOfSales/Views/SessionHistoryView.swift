@@ -5,8 +5,6 @@ import SwiftData
 /// to the daily receipts overview. Closed sessions cannot be edited or
 /// deleted: they are the bookkeeping record.
 struct SessionHistoryView: View {
-    @Environment(\.dismiss) private var dismiss
-
     @Query(
         filter: #Predicate<SaleSession> { $0.endedAt != nil },
         sort: \SaleSession.startedAt,
@@ -41,11 +39,6 @@ struct SessionHistoryView: View {
             }
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
         }
     }
 

@@ -4,7 +4,6 @@ import SwiftData
 /// Manage categories and products. Presented as a sheet from the register.
 struct ConfigurationView: View {
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
     @Query private var products: [Product]
@@ -31,14 +30,6 @@ struct ConfigurationView: View {
                             systemImage: "square.grid.2x2",
                             description: Text("Add a category to start building your menu.")
                         )
-                        if isCatalogEmpty {
-                            Button {
-                                confirmingDemoSetup = true
-                            } label: {
-                                Label("Or try it with a demo setup", systemImage: "wand.and.stars")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                        }
                     }
                     ForEach(categories) { category in
                         NavigationLink {
@@ -49,6 +40,23 @@ struct ConfigurationView: View {
                     }
                     .onDelete { offsets in pendingDeletion = offsets }
                     .onMove(perform: moveCategories)
+
+                    // The add action lives in the list it acts on, so it stays
+                    // tied to the categories even with other sections on screen.
+                    Button {
+                        creatingCategory = true
+                    } label: {
+                        Label("Add category", systemImage: "plus")
+                    }
+
+                    if isCatalogEmpty {
+                        Button {
+                            confirmingDemoSetup = true
+                        } label: {
+                            Label("Or try it with a demo setup", systemImage: "wand.and.stars")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
                 }
 
                 Section {
@@ -69,16 +77,6 @@ struct ConfigurationView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     EditButton()
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .bottomBar) {
-                    Button {
-                        creatingCategory = true
-                    } label: {
-                        Label("Add category", systemImage: "plus")
-                    }
                 }
             }
             .sheet(isPresented: $creatingCategory) {
