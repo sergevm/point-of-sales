@@ -61,16 +61,16 @@ struct ConfigurationView: View {
                         } label: {
                             Label("Organization & bookkeeper", systemImage: "building.2")
                         }
-                        .listRowBackground(measuredRowBackground)
+                        .measuredListRowBackground()
                         NavigationLink {
                             DataCleanupView()
                         } label: {
                             Label("Clean up old data", systemImage: "clock.arrow.circlepath")
                         }
-                        .listRowBackground(measuredRowBackground)
+                        .measuredListRowBackground()
                     }
                 }
-                .onPreferenceChange(SettingsRowsHeightKey.self) { settingsRowsHeight = $0 }
+                .onPreferenceChange(OccupiedListHeightKey.self) { settingsRowsHeight = $0 }
             }
             .navigationTitle("Configuration")
             .navigationBarTitleDisplayMode(.inline)
@@ -162,19 +162,6 @@ struct ConfigurationView: View {
         return max(220, listHeight - settingsRowsHeight - chrome)
     }
 
-    /// A standard grouped-row background that also reports the row's height.
-    private var measuredRowBackground: some View {
-        Color(.secondarySystemGroupedBackground)
-            .overlay {
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: SettingsRowsHeightKey.self,
-                        value: proxy.size.height
-                    )
-                }
-            }
-    }
-
     private func createDemoSetup() {
         do {
             try DemoCatalog.createDemoSetup(in: context)
@@ -227,15 +214,5 @@ struct ConfigurationView: View {
         for (index, category) in reordered.enumerated() {
             category.sortOrder = index
         }
-    }
-}
-
-/// Sums the heights of the settings rows so the empty categories state knows
-/// how much of the list it can claim without pushing them off screen.
-private struct SettingsRowsHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value += nextValue()
     }
 }

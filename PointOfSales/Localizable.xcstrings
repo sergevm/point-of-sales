@@ -313,16 +313,6 @@
         }
       }
     },
-    "Add the items sold in this category." : {
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voeg de artikelen toe die in deze categorie verkocht worden."
-          }
-        }
-      }
-    },
     "Address" : {
       "localizations" : {
         "nl" : {
@@ -1270,6 +1260,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geen producten"
+          }
+        }
+      }
+    },
+    "No products defined" : {
+      "localizations" : {
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen producten gedefinieerd"
           }
         }
       }
