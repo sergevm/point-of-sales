@@ -25,12 +25,11 @@ struct CategoryProductsView: View {
 
     var body: some View {
         List {
+            // Compact, like the categories list: ContentUnavailableView is
+            // built to fill a screen and leaves a huge gap as a list row.
             if products.isEmpty {
-                ContentUnavailableView(
-                    "No products",
-                    systemImage: "tray",
-                    description: Text("Add the items sold in this category.")
-                )
+                Text("Add the items sold in this category.")
+                    .foregroundStyle(.secondary)
             }
             ForEach(products) { product in
                 Button {

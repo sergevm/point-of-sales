@@ -273,16 +273,6 @@
         }
       }
     },
-    "Add a category to start building your menu." : {
-      "localizations" : {
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voeg een categorie toe om je menu op te bouwen."
-          }
-        }
-      }
-    },
     "Add categories and products first" : {
       "localizations" : {
         "nl" : {
@@ -1183,12 +1173,12 @@
         }
       }
     },
-    "No categories" : {
+    "No categories defined" : {
       "localizations" : {
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Geen categorieën"
+            "value" : "Geen categorieën gedefinieerd"
           }
         }
       }
