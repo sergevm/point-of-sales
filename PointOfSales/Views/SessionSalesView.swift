@@ -36,9 +36,6 @@ struct SessionSalesView: View {
                         confirmingEnd = true
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
             }
             .confirmationDialog(
                 "End this session? You won't be able to add more sales to it, and its report is final.",
