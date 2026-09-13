@@ -14,6 +14,12 @@ final class OrderItem {
 
     var quantity: Int
 
+    /// True when this line was given away rather than sold: a staff drink, a
+    /// tasting. Still recorded as a consumption (``quantity`` and cost are
+    /// unaffected), but ``lineTotal`` reports zero so it doesn't count towards
+    /// revenue in reports handed to the accountant.
+    var isNonPaying: Bool = false
+
     var order: Order?
 
     /// Reference back to the originating product, if it still exists. Uses the
@@ -26,6 +32,7 @@ final class OrderItem {
         unitPrice: Decimal,
         unitCost: Decimal = .zero,
         quantity: Int,
+        isNonPaying: Bool = false,
         product: Product? = nil,
         order: Order? = nil
     ) {
@@ -33,10 +40,14 @@ final class OrderItem {
         self.unitPrice = unitPrice
         self.unitCost = unitCost
         self.quantity = quantity
+        self.isNonPaying = isNonPaying
         self.product = product
         self.order = order
     }
 
-    var lineTotal: Decimal { unitPrice * Decimal(quantity) }
+    /// Zero for a non-paying line: nobody is charged for it, so it must not
+    /// contribute to revenue even though ``unitPrice`` is still snapshotted
+    /// (useful once a stock/consumption report needs the would-be value).
+    var lineTotal: Decimal { isNonPaying ? .zero : unitPrice * Decimal(quantity) }
     var lineCost: Decimal { unitCost * Decimal(quantity) }
 }

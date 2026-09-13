@@ -57,6 +57,8 @@ struct RegisterView: View {
                 categoryBar
                 Divider()
                 productGrid
+                Divider()
+                nonPayingToggleBar
             }
             .frame(maxWidth: .infinity)
 
@@ -80,6 +82,8 @@ struct RegisterView: View {
             Divider()
             productGrid
             Divider()
+            nonPayingToggleBar
+            Divider()
             ticketBar
         }
         .sheet(isPresented: $showingCart, onDismiss: {
@@ -96,19 +100,18 @@ struct RegisterView: View {
     }
 
     /// Bottom summary of the ticket being built; tapping it opens the full
-    /// cart sheet (also when empty, to switch between sale and credit).
+    /// cart sheet.
     private var ticketBar: some View {
         Button {
             showingCart = true
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: cart.isCorrection ? "arrow.uturn.backward.circle" : "cart.fill")
+                Image(systemName: "cart.fill")
                     .font(.title3)
-                    .foregroundStyle(cart.isCorrection ? Color.red : Color.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(cart.isCorrection ? "Credit ticket" : "Current ticket")
+                    Text("Current ticket")
                         .font(.headline)
-                        .foregroundStyle(cart.isCorrection ? .red : .primary)
                     Text("\(cart.itemCount) items")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -116,7 +119,6 @@ struct RegisterView: View {
                 Spacer()
                 Text(cart.signedTotal.currencyString)
                     .font(.title3.bold().monospacedDigit())
-                    .foregroundStyle(cart.isCorrection ? .red : .primary)
                 Image(systemName: "chevron.up")
                     .font(.footnote.bold())
                     .foregroundStyle(.secondary)
@@ -131,6 +133,28 @@ struct RegisterView: View {
     }
 
     // MARK: - Shared pieces
+
+    /// Sticky control under the product grid. While on, tapping a product adds
+    /// it as a non-paying line — a staff drink, a tasting — still recorded as
+    /// a consumption but excluded from the ticket total and, downstream, from
+    /// the accountant's revenue figures. Styled to be unmissable when active
+    /// so it's never left on by accident.
+    private var nonPayingToggleBar: some View {
+        Button {
+            cart.isAddingNonPaying.toggle()
+        } label: {
+            Label(
+                cart.isAddingNonPaying ? "Adding non-paying items" : "Add as non-paying",
+                systemImage: cart.isAddingNonPaying ? "gift.fill" : "gift"
+            )
+            .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(cart.isAddingNonPaying ? Color.white : Color.orange)
+        .background(cart.isAddingNonPaying ? Color.orange : Color.orange.opacity(0.12))
+    }
 
     private var productGrid: some View {
         ProductGridView(
