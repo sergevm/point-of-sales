@@ -35,9 +35,10 @@ struct CartPanelView: View {
 
     private var isViewingHistory: Bool { viewedOrder != nil }
 
-    /// Red for a credit ticket (live or past), the app accent otherwise.
+    /// Red for a past credit ticket being viewed, the app accent otherwise.
+    /// The live cart is never flagged red — credit is chosen at charge time.
     private var accent: Color {
-        (viewedOrder?.isCorrection ?? cart.isCorrection) ? .red : .accentColor
+        viewedOrder?.isCorrection == true ? .red : .accentColor
     }
 
     /// Whether the back arrow (deeper into history) has anywhere to go.
@@ -65,13 +66,9 @@ struct CartPanelView: View {
                 correctionLinks(for: order)
             } else if cart.isEmpty {
                 ContentUnavailableView(
-                    cart.isCorrection ? "Empty credit ticket" : "Empty ticket",
-                    systemImage: cart.isCorrection ? "arrow.uturn.backward.circle" : "cart",
-                    description: Text(
-                        cart.isCorrection
-                            ? "Tap products to credit them back to the client."
-                            : "Tap products to add them."
-                    )
+                    "Empty ticket",
+                    systemImage: "cart",
+                    description: Text("Tap products to add them.")
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -87,7 +84,7 @@ struct CartPanelView: View {
             footer
         }
         .background(.background)
-        .sheet(isPresented: $choosingCorrection) {
+        .sheet(isPresented: $choosingCorrection, onDismiss: { cart.isCorrection = false }) {
             CorrectionChargeSheet(session: session, cart: cart) { method, correctedOrder, reason in
                 charge(method, correctedOrder: correctedOrder, reason: reason)
             }
@@ -117,9 +114,7 @@ struct CartPanelView: View {
     }
 
     private var headerTitle: String {
-        guard let order = viewedOrder else {
-            return cart.isCorrection ? "Credit ticket" : "Current ticket"
-        }
+        guard let order = viewedOrder else { return "Current ticket" }
         guard let number = order.numberLabel else {
             return order.isCorrection ? "Credit ticket" : "Past ticket"
         }
@@ -138,19 +133,16 @@ struct CartPanelView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        } else if cart.isEmpty {
-            Picker("Ticket type", selection: Binding(
-                get: { cart.isCorrection },
-                set: { cart.isCorrection = $0 }
-            )) {
-                Text("Sale").tag(false)
-                Text("Credit").tag(true)
+        } else if !cart.isEmpty {
+            HStack(spacing: 4) {
+                Text("\(cart.itemCount) items")
+                    .foregroundStyle(.secondary)
+                if cart.nonPayingItemCount > 0 {
+                    Text("· \(cart.nonPayingItemCount) non-paying")
+                        .foregroundStyle(.orange)
+                }
             }
-            .pickerStyle(.segmented)
-        } else {
-            Text("\(cart.itemCount) items")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            .font(.subheadline)
         }
     }
 
@@ -168,11 +160,12 @@ struct CartPanelView: View {
             name: line.product.name,
             unitPrice: line.product.price,
             quantity: line.quantity,
-            lineTotal: Decimal(cart.sign) * line.lineTotal,
-            totalTint: cart.isCorrection ? .red : .primary,
+            lineTotal: line.lineTotal,
+            isNonPaying: line.isNonPaying,
             onIncrement: { cart.increment(line) },
             onDecrement: { cart.decrement(line) },
-            onRemove: { cart.remove(line) }
+            onRemove: { cart.remove(line) },
+            onToggleNonPaying: { cart.toggleNonPaying(line) }
         )
     }
 
@@ -182,7 +175,8 @@ struct CartPanelView: View {
             unitPrice: item.unitPrice,
             quantity: abs(item.quantity),
             lineTotal: item.lineTotal,
-            totalTint: (viewedOrder?.isCorrection ?? false) ? .red : .primary
+            totalTint: (viewedOrder?.isCorrection ?? false) ? .red : .primary,
+            isNonPaying: item.isNonPaying
         )
     }
 
@@ -264,13 +258,9 @@ struct CartPanelView: View {
                 }
 
                 Button {
-                    if cart.isCorrection {
-                        choosingCorrection = true
-                    } else {
-                        choosingPayment = true
-                    }
+                    choosingPayment = true
                 } label: {
-                    Text(cart.isCorrection ? "Charge credit" : "Charge")
+                    Text("Charge")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
@@ -286,6 +276,10 @@ struct CartPanelView: View {
                         Button(paymentButtonTitle(for: method)) {
                             charge(method)
                         }
+                    }
+                    Button("Charge as credit…", role: .destructive) {
+                        cart.isCorrection = true
+                        choosingCorrection = true
                     }
                     Button("Cancel", role: .cancel) {}
                 }
@@ -336,16 +330,26 @@ private struct TicketLineRow: View {
     let quantity: Int
     let lineTotal: Decimal
     var totalTint: Color = .primary
+    var isNonPaying: Bool = false
     var onIncrement: (() -> Void)?
     var onDecrement: (() -> Void)?
     var onRemove: (() -> Void)?
+    var onToggleNonPaying: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.body.weight(.medium))
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    Text(name)
+                        .font(.body.weight(.medium))
+                        .lineLimit(1)
+                    if isNonPaying {
+                        Image(systemName: "gift.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                            .accessibilityLabel(Text("Non-paying"))
+                    }
+                }
                 Text(unitPrice.currencyString)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -363,10 +367,24 @@ private struct TicketLineRow: View {
 
             Text(lineTotal.currencyString)
                 .font(.body.monospacedDigit())
-                .foregroundStyle(totalTint)
+                .strikethrough(isNonPaying)
+                .foregroundStyle(isNonPaying ? .orange : totalTint)
                 .frame(minWidth: 64, alignment: .trailing)
         }
-        .swipeActions {
+        .swipeActions(edge: .leading) {
+            if let onToggleNonPaying {
+                Button {
+                    onToggleNonPaying()
+                } label: {
+                    Label(
+                        isNonPaying ? "Mark as paying" : "Mark as non-paying",
+                        systemImage: isNonPaying ? "gift.fill" : "gift"
+                    )
+                }
+                .tint(.orange)
+            }
+        }
+        .swipeActions(edge: .trailing) {
             if let onRemove {
                 Button(role: .destructive, action: onRemove) {
                     Label("Remove", systemImage: "trash")

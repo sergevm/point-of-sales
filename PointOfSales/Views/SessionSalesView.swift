@@ -189,6 +189,12 @@ struct SessionSalesView: View {
                 Text("\(item.quantity)×  \(item.productName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if item.isNonPaying {
+                    Image(systemName: "gift.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .accessibilityLabel(Text("Non-paying"))
+                }
                 Spacer()
                 Text(item.lineTotal.currencyString)
                     .font(.caption.monospacedDigit())

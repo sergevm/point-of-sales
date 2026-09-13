@@ -6,31 +6,55 @@ import Observation
 @Observable
 final class Cart {
 
-    /// One product and its quantity in the current ticket.
+    /// One product and its quantity in the current ticket. Two lines can exist
+    /// for the same product — one paying, one not — so identity is a fresh
+    /// UUID per line rather than the product's own identifier.
     struct Line: Identifiable {
+        let id = UUID()
         let product: Product
         var quantity: Int
 
-        var id: PersistentIdentifier { product.persistentModelID }
+        /// True for a line given away rather than sold — a staff drink, a
+        /// tasting — still recorded as a consumption but excluded from
+        /// ``total`` and, downstream, from revenue reported to the accountant.
+        var isNonPaying: Bool = false
+
         var lineTotal: Decimal { product.price * Decimal(quantity) }
     }
 
     private(set) var lines: [Line] = []
 
     /// When true, this is a credit ticket: everything on it is charged as a
-    /// negative amount to reimburse the client. Only togglable while the cart is
-    /// empty (enforced by the UI); reset when the cart is cleared.
+    /// negative amount to reimburse the client. Items are always added the
+    /// normal way; the seller flips this on at charge time by choosing "Charge
+    /// as credit" (enforced by the UI), and it's reset when the cart is
+    /// cleared or the credit charge is cancelled.
     var isCorrection = false
+
+    /// When true, products tapped in the grid are added as non-paying rather
+    /// than as a normal sale line. Toggled from a sticky control under the
+    /// product grid; lives on the cart (not the view) so it resets along with
+    /// everything else when the ticket is cleared or charged, rather than
+    /// silently carrying into the next one.
+    var isAddingNonPaying = false
 
     var isEmpty: Bool { lines.isEmpty }
 
-    /// Total number of units in the ticket (for a badge).
+    /// Total number of units in the ticket (for a badge). Includes non-paying
+    /// lines — they're still a consumption even though nobody pays for them.
     var itemCount: Int { lines.reduce(0) { $0 + $1.quantity } }
 
-    /// The unsigned sum of the line totals. Always positive; use ``signedTotal``
-    /// for anything that must reflect a credit ticket's negative amount.
+    /// Total non-paying units in the ticket, for a subtle reminder in the UI.
+    var nonPayingItemCount: Int {
+        lines.filter(\.isNonPaying).reduce(0) { $0 + $1.quantity }
+    }
+
+    /// The unsigned sum of the paying line totals. Non-paying lines don't
+    /// contribute — nobody is charged for them. Always positive; use
+    /// ``signedTotal`` for anything that must reflect a credit ticket's
+    /// negative amount.
     var total: Decimal {
-        lines.reduce(Decimal.zero) { $0 + $1.lineTotal }
+        lines.reduce(Decimal.zero) { $0 + ($1.isNonPaying ? .zero : $1.lineTotal) }
     }
 
     /// `-1` for a credit ticket, `+1` for a normal sale.
@@ -39,12 +63,15 @@ final class Cart {
     /// The amount the ticket represents, signed: negative for a credit ticket.
     var signedTotal: Decimal { Decimal(sign) * total }
 
-    /// Adds one unit of a product, merging with an existing line if present.
+    /// Adds one unit of a product, merging with an existing line for the same
+    /// product and paying/non-paying state, if one is present. Whether the
+    /// new unit is non-paying follows ``isAddingNonPaying``.
     func add(_ product: Product) {
-        if let index = lines.firstIndex(where: { $0.product == product }) {
+        let nonPaying = isAddingNonPaying
+        if let index = lines.firstIndex(where: { $0.product == product && $0.isNonPaying == nonPaying }) {
             lines[index].quantity += 1
         } else {
-            lines.append(Line(product: product, quantity: 1))
+            lines.append(Line(product: product, quantity: 1, isNonPaying: nonPaying))
         }
     }
 
@@ -66,9 +93,28 @@ final class Cart {
         lines.removeAll { $0.id == line.id }
     }
 
+    /// Flips a line between paying and non-paying (e.g. correcting a mis-tap),
+    /// merging into a matching line if one already exists for the same
+    /// product and the new state.
+    func toggleNonPaying(_ line: Line) {
+        guard let index = lines.firstIndex(where: { $0.id == line.id }) else { return }
+        var updated = lines[index]
+        updated.isNonPaying.toggle()
+
+        if let matchIndex = lines.firstIndex(where: {
+            $0.id != updated.id && $0.product == updated.product && $0.isNonPaying == updated.isNonPaying
+        }) {
+            lines[matchIndex].quantity += updated.quantity
+            lines.remove(at: index)
+        } else {
+            lines[index] = updated
+        }
+    }
+
     func clear() {
         lines.removeAll()
         isCorrection = false
+        isAddingNonPaying = false
     }
 
     /// The amount actually charged for a given payment method: cash totals are
@@ -116,6 +162,7 @@ final class Cart {
                 unitPrice: line.product.price,
                 unitCost: line.product.costPrice,
                 quantity: sign * line.quantity,
+                isNonPaying: line.isNonPaying,
                 product: line.product,
                 order: order
             )
