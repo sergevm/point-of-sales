@@ -127,7 +127,7 @@ struct RootView: View {
             Button {
                 showingConfiguration = true
             } label: {
-                Label("Configure", systemImage: "slider.horizontal.3")
+                Label("Configure", systemImage: "gearshape.fill")
             }
         }
     }
