@@ -2,10 +2,11 @@ import SwiftUI
 import SwiftData
 
 /// The main register. In a regular-width layout (iPad, large iPhones in
-/// landscape) the categories + product grid sit on the left with the current
-/// ticket permanently on the right and the last order in an inspector. In a
-/// compact-width layout (iPhone) the grid fills the screen, a bottom bar
-/// summarizes the ticket, and both the ticket and the last order open as sheets.
+/// landscape) the categories + product grid sit on the left with the ticket
+/// panel permanently on the right. In a compact-width layout (iPhone) the grid
+/// fills the screen, a bottom bar summarizes the ticket, and the panel opens
+/// as a sheet. In both layouts the panel's own paging arrows step back
+/// through past orders in place, so there's no separate last-order screen.
 struct RegisterView: View {
     let session: SaleSession
     let cart: Cart
@@ -22,17 +23,13 @@ struct RegisterView: View {
 
     @Query(sort: \ProductCategory.sortOrder) private var categories: [ProductCategory]
     @State private var selectedCategoryID: PersistentIdentifier?
-    @State private var showingLastOrder = false
     @State private var showingCart = false
 
-    /// Compact only: an order was charged from the cart sheet, so the last-order
-    /// sheet should be presented once the cart sheet has finished dismissing;
-    /// presenting both at once would drop the second sheet.
-    @State private var showLastOrderAfterCart = false
-
-    /// Compact only: linked order to reveal in the sales list once the
-    /// last-order sheet has finished dismissing, for the same reason.
-    @State private var pendingLinkedOrder: Order?
+    /// `nil` shows the live cart; a non-negative index pages the ticket panel
+    /// into the session's past orders (0 = most recent). Lifted up from
+    /// ``CartPanelView`` so tapping a product while browsing history can jump
+    /// back to the live ticket before adding to it.
+    @State private var historyIndex: Int?
 
     private var selectedCategory: ProductCategory? {
         if let id = selectedCategoryID,
@@ -42,26 +39,12 @@ struct RegisterView: View {
         return categories.first
     }
 
-    /// The most recently charged order in this session, shown in the
-    /// inspector (regular) or the last-order sheet (compact).
-    private var lastOrder: Order? { session.ordersByNewest.first }
-
     var body: some View {
         Group {
             if horizontalSizeClass == .compact {
                 compactLayout
             } else {
                 regularLayout
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showingLastOrder.toggle()
-                } label: {
-                    Label("Last order", systemImage: "checklist")
-                }
-                .disabled(lastOrder == nil)
             }
         }
     }
@@ -79,16 +62,13 @@ struct RegisterView: View {
 
             Divider()
 
-            CartPanelView(session: session, cart: cart) {
-                showingLastOrder = true
-            }
+            CartPanelView(
+                session: session,
+                cart: cart,
+                historyIndex: $historyIndex,
+                onShowLinkedOrder: onShowOrderInSales
+            )
             .frame(width: 340)
-        }
-        .inspector(isPresented: $showingLastOrder) {
-            lastOrderContent { order in
-                onShowOrderInSales(order)
-            }
-            .inspectorColumnWidth(min: 280, ideal: 320, max: 420)
         }
     }
 
@@ -103,26 +83,14 @@ struct RegisterView: View {
             ticketBar
         }
         .sheet(isPresented: $showingCart, onDismiss: {
-            if showLastOrderAfterCart {
-                showLastOrderAfterCart = false
-                showingLastOrder = true
-            }
+            historyIndex = nil
         }) {
-            CartPanelView(session: session, cart: cart) {
-                showLastOrderAfterCart = true
-                showingCart = false
-            }
-        }
-        .sheet(isPresented: $showingLastOrder, onDismiss: {
-            if let order = pendingLinkedOrder {
-                pendingLinkedOrder = nil
-                onShowOrderInSales(order)
-            }
-        }) {
-            lastOrderContent { order in
-                pendingLinkedOrder = order
-                showingLastOrder = false
-            }
+            CartPanelView(
+                session: session,
+                cart: cart,
+                historyIndex: $historyIndex,
+                onShowLinkedOrder: onShowOrderInSales
+            )
             .presentationDetents([.medium, .large])
         }
     }
@@ -168,25 +136,14 @@ struct RegisterView: View {
         ProductGridView(
             category: selectedCategory,
             onSelect: { product in
+                // Tapping a product while browsing a past, read-only ticket
+                // jumps back to the live one and adds there, rather than
+                // requiring a manual page-back first.
+                historyIndex = nil
                 cart.add(product)
-                showingLastOrder = false
             },
             onOpenConfiguration: onOpenConfiguration
         )
-    }
-
-    private func lastOrderContent(onShowLinkedOrder: @escaping (Order) -> Void) -> some View {
-        Group {
-            if let order = lastOrder {
-                LastOrderPanelView(order: order, onShowLinkedOrder: onShowLinkedOrder)
-            } else {
-                ContentUnavailableView(
-                    "No orders yet",
-                    systemImage: "checklist",
-                    description: Text("Charged orders appear here so you can serve them.")
-                )
-            }
-        }
     }
 
     private var categoryBar: some View {
@@ -214,7 +171,6 @@ struct RegisterView: View {
                 let isSelected = category.persistentModelID == selectedCategory?.persistentModelID
                 Button {
                     selectedCategoryID = category.persistentModelID
-                    showingLastOrder = false
                 } label: {
                     Text(category.name)
                         .font(.headline)
